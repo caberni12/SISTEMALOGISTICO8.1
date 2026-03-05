@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="es">
 <head>
 
@@ -11,335 +10,277 @@
 
 <style>
 
-  /* ================= VARIABLES ================= */
-  
-  :root{
-   --bg:#f8fafc;
-   --card:#ffffff;
-   --txt:#0f172a;
-   --muted:#64748b;
-   --pri:#14b8a6;
-   --pri-dark:#0d9488;
-   --border:#cbd5e1;
-  }
-  
-  /* ================= BASE ================= */
-  
-  *{box-sizing:border-box}
-  
-  body{
-   margin:0;
-   font-family:Inter,Arial;
-   background:var(--bg);
-   color:var(--txt);
-   padding:16px;
-  }
-  
-  h2{
-   margin:0 0 14px 0;
-  }
-  
-  /* ================= KPI ================= */
-  
-  #kpis{
-   display:grid;
-   grid-template-columns:repeat(6,1fr);
-   gap:12px;
-   margin-bottom:16px;
-  }
-  
-  .kpi{
-   background:#fff;
-   border-radius:12px;
-   padding:10px;
-   text-align:center;
-   box-shadow:0 4px 10px rgba(0,0,0,.08);
-   cursor:pointer;
-  }
-  
-  .kpi canvas{
-   width:55px!important;
-   height:55px!important;
-   margin:auto;
-  }
-  
-  /* ================= FILTROS ================= */
-  
-  .filters{
-   display:flex;
-   gap:8px;
-   flex-wrap:wrap;
-   margin-bottom:14px;
-  }
-  
-  input,select{
-   padding:8px 10px;
-   border-radius:10px;
-   border:1px solid var(--border);
-   font-size:13px;
-   background:#fff;
-  }
-  
-  /* ================= BOTONES ================= */
-  
-  button{
-   padding:8px 12px;
-   border-radius:10px;
-   border:0;
-   background:var(--pri);
-   color:#fff;
-   font-weight:600;
-   cursor:pointer;
-   position:relative;
-   font-size:13px;
-  }
-  
-  button:hover{
-   background:var(--pri-dark);
-  }
-  
-  /* ================= LOADER BOTON ================= */
-  
-  button.loading{
-   pointer-events:none;
-   opacity:.8;
-  }
-  
-  button.loading::after{
-   content:"";
-   width:14px;
-   height:14px;
-   border:3px solid #fff;
-   border-top-color:transparent;
-   border-radius:50%;
-   position:absolute;
-   right:8px;
-   top:50%;
-   transform:translateY(-50%);
-   animation:spin .8s linear infinite;
-  }
-  
-  @keyframes spin{
-   to{transform:translateY(-50%) rotate(360deg)}
-  }
-  
-  /* ================= TABLA ================= */
-  
-  .table-scroll{
-   max-height:70vh;
-   overflow:auto;
-   border-radius:16px;
-  }
-  
-  table{
-   width:100%;
-   border-collapse:collapse;
-   background:var(--card);
-   box-shadow:0 8px 24px rgba(0,0,0,.08);
-  }
-  
-  th,td{
-   padding:6px 10px;
-   border-bottom:1px solid var(--border);
-   font-size:13px;
-   line-height:1.2;
-   white-space:nowrap;
-  }
-  
-  th{
-   color:var(--muted);
-   position:sticky;
-   top:0;
-   background:#fff;
-   font-size:12px;
-  }
-  
-  /* ================= CONTROL COLUMNAS ================= */
-  
-  /* CLIENTE */
-  
-  td:nth-child(5){
-   max-width:180px;
-   overflow:hidden;
-   text-overflow:ellipsis;
-  }
-  
-  /* DIRECCION */
-  
-  td:nth-child(6){
-   max-width:320px;
-   overflow:hidden;
-   text-overflow:ellipsis;
-   white-space:nowrap;
-  }
-  
-  /* COMUNA */
-  
-  td:nth-child(7){
-   max-width:140px;
-   overflow:hidden;
-   text-overflow:ellipsis;
-  }
-  
-  /* TRANSPORTE */
-  
-  td:nth-child(8){
-   max-width:140px;
-   overflow:hidden;
-   text-overflow:ellipsis;
-  }
-  
-  /* RESPONSABLE */
-  
-  td:nth-child(15){
-   max-width:150px;
-   overflow:hidden;
-   text-overflow:ellipsis;
-  }
-  
-  /* FILA HOVER */
-  
-  tbody tr:hover{
-   background:#f1f5f9;
-  }
-  
-  /* ================= ACCIONES ================= */
-  
-  .actions{
-   display:flex;
-   gap:4px;
-  }
-  
-  .actions button{
-   width:28px;
-   height:28px;
-   padding:0;
-   display:flex;
-   align-items:center;
-   justify-content:center;
-   font-size:14px;
-  }
-  
-  /* ================= FOTO ================= */
-  
-  .foto-thumb{
-   width:38px;
-   height:38px;
-   object-fit:cover;
-   border-radius:6px;
-   border:1px solid var(--border);
-   cursor:pointer;
-  }
-  
-  /* ================= PDF ================= */
-  
-  .pdf-btn{
-   background:#0f172a;
-   color:#fff;
-   padding:4px 7px;
-   border-radius:6px;
-   font-size:11px;
-   text-decoration:none;
-  }
-  
-  /* ================= SEMAFORO ================= */
-  
-  .semaforo{
-   padding:3px 8px;
-   border-radius:6px;
-   font-size:11px;
-   font-weight:600;
-   color:#fff;
-  }
-  
-  .sem-verde{background:#16a34a}
-  .sem-amarillo{background:#eab308}
-  .sem-rojo{background:#dc2626}
-  .sem-azul{background:#2563eb}
-  
-  /* ================= MODAL ================= */
-  
-  .modal{
-   position:fixed;
-   inset:0;
-   background:rgba(0,0,0,.65);
-   display:none;
-   align-items:center;
-   justify-content:center;
-   z-index:9999;
-  }
-  
-  .modal-content{
-   background:#fff;
-   padding:22px;
-   border-radius:16px;
-   max-width:95%;
-   max-height:90vh;
-   overflow:auto;
-  }
-  
-  /* ================= FORMULARIO ================= */
-  
-  #modalForm input,
-  #modalForm select{
-   width:100%;
-   display:block;
-   margin-bottom:10px;
-  }
-  
-  /* ================= ESCRITORIO ================= */
-  
-  @media(min-width:1024px){
-  
-   #modalForm .modal-content{
-    width:720px;
-   }
-  
-  }
-  
-  /* ================= FOTO GRANDE ================= */
-  
-  .foto-grande{
-   width:100%;
-   max-height:75vh;
-   object-fit:contain;
-   border-radius:16px;
-  }
-  
-  /* ================= MAPA ================= */
-  
-  .map-frame{
-   width:90vw;
-   max-width:1000px;
-   height:70vh;
-   border:0;
-   border-radius:16px;
-  }
-  
-  /* ================= MOBILE ================= */
-  
-  .mobile-list{
-   display:none;
-  }
-  
-  @media(max-width:768px){
-  
-  .table-scroll{
-   display:none;
-  }
-  
-  .mobile-list{
-   display:block;
-  }
-  
-  #kpis{
-   grid-template-columns:repeat(2,1fr);
-  }
-  
-  }
-  
-  </style>
-  
+/* ================= VARIABLES ================= */
+
+:root{
+ --bg:#f8fafc;
+ --card:#ffffff;
+ --txt:#0f172a;
+ --muted:#64748b;
+ --pri:#14b8a6;
+ --pri-dark:#0d9488;
+ --border:#cbd5e1;
+}
+
+/* ================= BASE ================= */
+
+*{box-sizing:border-box}
+
+body{
+ margin:0;
+ font-family:Inter,Arial;
+ background:var(--bg);
+ color:var(--txt);
+ padding:16px;
+}
+
+h2{
+ margin:0 0 14px 0;
+}
+
+/* ================= KPI ================= */
+
+#kpis{
+ display:grid;
+ grid-template-columns:repeat(4,1fr);
+ gap:12px;
+ margin-bottom:16px;
+}
+
+.kpi{
+ background:#fff;
+ border-radius:12px;
+ padding:12px;
+ text-align:center;
+ box-shadow:0 4px 10px rgba(0,0,0,.08);
+}
+
+.kpi b{
+ font-size:18px;
+ display:block;
+}
+
+/* ================= FILTROS ================= */
+
+.filters{
+ display:flex;
+ gap:8px;
+ flex-wrap:wrap;
+ margin-bottom:14px;
+}
+
+input,select{
+ padding:8px 10px;
+ border-radius:10px;
+ border:1px solid var(--border);
+ font-size:13px;
+ background:#fff;
+}
+
+/* ================= BOTONES ================= */
+
+button{
+ padding:8px 12px;
+ border-radius:10px;
+ border:0;
+ background:var(--pri);
+ color:#fff;
+ font-weight:600;
+ cursor:pointer;
+ position:relative;
+ font-size:13px;
+}
+
+button:hover{
+ background:var(--pri-dark);
+}
+
+/* ================= LOADER BOTON ================= */
+
+button.loading{
+ pointer-events:none;
+ opacity:.8;
+}
+
+button.loading::after{
+ content:"";
+ width:14px;
+ height:14px;
+ border:3px solid #fff;
+ border-top-color:transparent;
+ border-radius:50%;
+ position:absolute;
+ right:8px;
+ top:50%;
+ transform:translateY(-50%);
+ animation:spin .8s linear infinite;
+}
+
+@keyframes spin{
+ to{transform:translateY(-50%) rotate(360deg)}
+}
+
+/* ================= TABLA ================= */
+
+.table-scroll{
+ max-height:70vh;
+ overflow:auto;
+ border-radius:16px;
+}
+
+table{
+ width:100%;
+ border-collapse:collapse;
+ background:var(--card);
+ box-shadow:0 8px 24px rgba(0,0,0,.08);
+}
+
+th,td{
+ padding:6px 10px;
+ border-bottom:1px solid var(--border);
+ font-size:13px;
+ line-height:1.2;
+ white-space:nowrap;
+}
+
+th{
+ color:var(--muted);
+ position:sticky;
+ top:0;
+ background:#fff;
+ font-size:12px;
+}
+
+tbody tr:hover{
+ background:#f1f5f9;
+}
+
+/* ================= ACCIONES ================= */
+
+.actions{
+ display:flex;
+ gap:4px;
+}
+
+.actions button{
+ width:28px;
+ height:28px;
+ padding:0;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ font-size:14px;
+}
+
+/* ================= FOTO ================= */
+
+.foto-thumb{
+ width:38px;
+ height:38px;
+ object-fit:cover;
+ border-radius:6px;
+ border:1px solid var(--border);
+ cursor:pointer;
+}
+
+/* ================= SEMAFORO ================= */
+
+.sem-verde{background:#16a34a;color:#fff;padding:3px 8px;border-radius:6px;font-size:11px}
+.sem-amarillo{background:#eab308;color:#fff;padding:3px 8px;border-radius:6px;font-size:11px}
+.sem-rojo{background:#dc2626;color:#fff;padding:3px 8px;border-radius:6px;font-size:11px}
+.sem-azul{background:#2563eb;color:#fff;padding:3px 8px;border-radius:6px;font-size:11px}
+
+/* ================= MODAL ================= */
+
+.modal{
+ position:fixed;
+ inset:0;
+ background:rgba(0,0,0,.65);
+ display:none;
+ align-items:center;
+ justify-content:center;
+ z-index:9999;
+}
+
+.modal-content{
+ background:#fff;
+ padding:22px;
+ border-radius:16px;
+ max-width:95%;
+ max-height:90vh;
+ overflow:auto;
+}
+
+/* ================= FORM ================= */
+
+#modalForm input,
+#modalForm select{
+ width:100%;
+ display:block;
+ margin-bottom:10px;
+}
+
+/* ================= FOTO GRANDE ================= */
+
+.foto-grande{
+ width:100%;
+ max-height:75vh;
+ object-fit:contain;
+ border-radius:16px;
+}
+
+/* ================= MAPA ================= */
+
+.map-frame{
+ width:90vw;
+ max-width:1000px;
+ height:70vh;
+ border:0;
+ border-radius:16px;
+}
+
+/* ================= TARJETAS MOBILE ================= */
+
+.mobile-list{
+ display:none;
+}
+
+.card{
+ background:#fff;
+ padding:14px;
+ border-radius:14px;
+ box-shadow:0 6px 16px rgba(0,0,0,.08);
+ margin-bottom:12px;
+ font-size:13px;
+}
+
+.card-title{
+ font-size:15px;
+ font-weight:700;
+ margin-bottom:6px;
+ display:flex;
+ justify-content:space-between;
+}
+
+/* ================= MOBILE ================= */
+
+@media(max-width:768px){
+
+ .table-scroll{
+  display:none;
+ }
+
+ .mobile-list{
+  display:block;
+ }
+
+ #kpis{
+  grid-template-columns:repeat(2,1fr);
+ }
+
+}
+
+</style>
 
 </head>
 
@@ -352,6 +293,7 @@
 <div class="filters">
 
 <input id="search" placeholder="Buscar pedido o cliente">
+
 <input type="date" id="fDesde">
 <input type="date" id="fHasta">
 
@@ -364,7 +306,10 @@
 <option>CANCELADO</option>
 </select>
 
-<button id="btnNuevo">➕ Nuevo</button> <button id="btnPDF">📄 PDF</button> <button id="btnExcel">📊 Excel</button> <button id="btnReload">🔄 Recargar</button>
+<button id="btnNuevo">➕ Nuevo</button>
+<button id="btnPDF">📄 PDF</button>
+<button id="btnExcel">📊 Excel</button>
+<button id="btnReload">🔄 Recargar</button>
 
 </div>
 
@@ -445,7 +390,7 @@
 
 <div class="modal-content">
 
-<h3 id="mtitle">Nuevo Pedido</h3>
+<h3 id="mtitle">Pedido</h3>
 
 <input id="mPedido" placeholder="Pedido">
 
