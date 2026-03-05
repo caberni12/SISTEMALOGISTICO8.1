@@ -5,6 +5,7 @@ const API="https://script.google.com/macros/s/AKfycbzazTrBFiDteGTNfdhoVFK9bVm20K
 /* ================= DOM ================= */
 
 const tbody=document.getElementById("tbody");
+const mobileList=document.getElementById("mobileList");
 
 const search=document.getElementById("search");
 const fStatus=document.getElementById("fStatus");
@@ -52,15 +53,12 @@ let RAW=[];
 let FILT=[];
 let charts={};
 let EDIT=null;
-
 let KPI_FILTER="";
 
 /* ================= UTIL ================= */
 
 function setLoading(btn,state){
-
 if(!btn) return;
-
 if(state){
 btn.classList.add("loading");
 btn.disabled=true;
@@ -68,7 +66,6 @@ btn.disabled=true;
 btn.classList.remove("loading");
 btn.disabled=false;
 }
-
 }
 
 function formatDate(d){
@@ -83,6 +80,18 @@ reader.onload=()=>resolve(reader.result);
 reader.onerror=reject;
 reader.readAsDataURL(file);
 });
+}
+
+function renderEstado(status){
+let color="#fff";
+
+if(status==="PENDIENTE") color="#facc15";
+if(status==="EN RUTA") color="#ef4444";
+if(status==="ENTREGADO") color="#22c55e";
+if(status==="RECIBIDO") color="#fb923c";
+if(status==="CANCELADO") color="#3b82f6";
+
+return "<span style="background:#000;color:${color};padding:3px 10px;border-radius:6px">${status}</span>";
 }
 
 /* ================= LOAD ================= */
@@ -101,13 +110,10 @@ if(!Array.isArray(RAW)) RAW=[];
 applyFilters();
 
 }catch(err){
-
 console.error(err);
-
 }
 
 setLoading(btnReload,false);
-
 }
 
 /* ================= FILTROS ================= */
@@ -115,7 +121,6 @@ setLoading(btnReload,false);
 function applyFilters(){
 
 const q=(search.value||"").toLowerCase();
-
 const desde=fDesde.value?new Date(fDesde.value):null;
 const hasta=fHasta.value?new Date(fHasta.value):null;
 
@@ -124,7 +129,6 @@ FILT=RAW.filter(r=>{
 const txt=(r.cliente||"").toLowerCase()+(r.pedido||"");
 
 const okText=!q || txt.includes(q);
-
 const okStatus=!fStatus.value || r.status===fStatus.value;
 
 let okFecha=true;
@@ -150,7 +154,6 @@ return okText && okStatus && okFecha && okKpi;
 
 render();
 renderKPIs();
-
 }
 
 search.oninput=applyFilters;
@@ -162,97 +165,31 @@ fHasta.onchange=applyFilters;
 
 function render(){
 
-tbody.innerHTML="";
-
-if(!FILT.length){
-
-tbody.innerHTML="<tr><td colspan='19'>Sin datos</td></tr>";
-return;
-
-}
-
-/* DETECTAR MOVIL */
-
-const mobile=window.innerWidth<768;
-
-/* ================= TARJETAS ================= */
-
-if(mobile){
-
-tbody.innerHTML=`<tr><td colspan="19"><div id="cards"></div></td></tr>`;
-
-const cards=document.getElementById("cards");
-
-FILT.forEach(r=>{
-
-const card=`
-
-<div class="pedido-card">
-
-<div style="display:flex;justify-content:space-between">
-
-<div style="font-size:18px;font-weight:bold">
-Pedido #${r.pedido||""}
-</div>
-
-${renderEstado(r.status)}
-
-</div>
-
-<div><b>Cliente:</b> ${r.cliente||""}</div>
-
-<div><b>Dirección:</b> ${r.direccion||""}</div>
-
-<div><b>Comuna:</b> ${r.comuna||""}</div>
-
-<div><b>Transporte:</b> ${r.transporte||""}</div>
-
-<div><b>Cajas:</b> ${r.etiquetas||""}</div>
-
-<div><b>Ingreso:</b> ${formatDate(r.fechaIngreso)}</div>
-
-<div><b>Entrega:</b> ${r.fechaEntrega||""}</div>
-
-<div><b>Responsable:</b> ${r.responsable||""}</div>
-
-<div style="margin-top:8px">
-
-${r.foto?`<img src="${r.foto}" style="width:70px;border-radius:6px" onclick="verFoto('${r.foto}')">`:""}
-
-</div>
-
-<div style="margin-top:10px">
-
-<button onclick="openModal(${r._row})">✏️</button>
-
-<button onclick="deleteRow(${r._row},this)">🗑️</button>
-
-</div>
-
-</div>
-`;
-
-cards.insertAdjacentHTML("beforeend",card);
-
-});
-
-return;
+renderTable();
+renderCards();
 
 }
 
 /* ================= TABLA ================= */
 
+function renderTable(){
+
+tbody.innerHTML="";
+
+if(!FILT.length){
+tbody.innerHTML="<tr><td colspan='19'>Sin datos</td></tr>";
+return;
+}
+
 FILT.forEach(r=>{
 
 const pdfIcon=r.pdf
-? `<a href="${r.pdf}" target="_blank">📄</a>`
+? "<a href="${r.pdf}" target="_blank" class="pdf-btn">PDF</a>"
 : "";
 
 const tr=`
 
-<tr>
-
-<td>${formatDate(r.fechaIngreso)}</td>
+<tr><td>${formatDate(r.fechaIngreso)}</td>
 <td>${r.pedido||""}</td>
 <td>${r.tipoDocumento||""}</td>
 <td>${r.numeroDocumento||""}</td>
@@ -266,43 +203,44 @@ const tr=`
 <td>${r.alerta||""}</td>
 <td>${r.diasAtraso||""}</td>
 <td>${r.semaforo||""}</td>
-<td>${r.responsable||""}</td>
-
-<td>${r.foto?`<img src="${r.foto}" class="foto-thumb" onclick="verFoto('${r.foto}')">`:""}</td>
-
-<td>${pdfIcon}</td>
-
-<td>${r.pdfTraslado?`<a href="${r.pdfTraslado}" target="_blank">📄</a>`:""}</td>
-
-<td>
-
+<td>${r.responsable||""}</td><td>${r.foto?`<img src="${r.foto}" class="foto-thumb" onclick="verFoto('${r.foto}')">`:""}</td><td>${pdfIcon}</td><td>${r.pdfTraslado?`<a href="${r.pdfTraslado}" target="_blank">📄</a>`:""}</td><td class="actions">
 <button onclick="openModal(${r._row})">✏️</button>
 <button onclick="deleteRow(${r._row},this)">🗑️</button>
-
-</td>
-
-</tr>
-`;
-
-tbody.insertAdjacentHTML("beforeend",tr);
+</td></tr>
+`;tbody.insertAdjacentHTML("beforeend",tr);
 
 });
 
 }
 
-/* ================= ESTADO ================= */
+/* ================= TARJETAS MOBILE ================= */
 
-function renderEstado(status){
+function renderCards(){
 
-let color="#fff";
+mobileList.innerHTML="";
 
-if(status==="PENDIENTE") color="#facc15";
-if(status==="EN RUTA") color="#ef4444";
-if(status==="ENTREGADO") color="#22c55e";
-if(status==="RECIBIDO") color="#fb923c";
-if(status==="CANCELADO") color="#3b82f6";
+FILT.forEach(r=>{
 
-return `<span style="background:#000;color:${color};padding:4px 10px;border-radius:6px">${status}</span>`;
+const card=`
+
+<div style="background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 4px 10px rgba(0,0,0,.08)"><div style="display:flex;justify-content:space-between"><b>Pedido #${r.pedido||""}</b>
+${renderEstado(r.status)}
+
+</div><div style="margin-top:6px"><b>Cliente:</b> ${r.cliente||""}</div>
+<div><b>Dirección:</b> ${r.direccion||""}</div>
+<div><b>Comuna:</b> ${r.comuna||""}</div>
+<div><b>Transporte:</b> ${r.transporte||""}</div>
+<div><b>Cajas:</b> ${r.etiquetas||""}</div>
+<div><b>Responsable:</b> ${r.responsable||""}</div><div style="margin-top:8px">${r.foto?"<img src="${r.foto}" class="foto-thumb" onclick="verFoto('${r.foto}')">":""}
+
+</div><div style="margin-top:10px;display:flex;gap:6px"><button onclick="openModal(${r._row})">Editar</button>
+<button onclick="deleteRow(${r._row},this)">Eliminar</button>
+
+</div></div>`;
+
+mobileList.insertAdjacentHTML("beforeend",card);
+
+});
 
 }
 
@@ -311,77 +249,85 @@ return `<span style="background:#000;color:${color};padding:4px 10px;border-radi
 function renderKPIs(){
 
 const total=RAW.length;
-
 const pendientes=RAW.filter(x=>x.status==="PENDIENTE").length;
 const ruta=RAW.filter(x=>x.status==="EN RUTA").length;
 const entregado=RAW.filter(x=>x.status==="ENTREGADO").length;
 
 kpis.innerHTML=`
 
-<div class="kpi" onclick="filterKPI('')">
-<b>${total}</b>
-<div>Total</div>
-</div>
-
-<div class="kpi" onclick="filterKPI('PENDIENTE')">
-<b>${pendientes}</b>
-<div>Pendientes</div>
-</div>
-
-<div class="kpi" onclick="filterKPI('EN RUTA')">
-<b>${ruta}</b>
-<div>En Ruta</div>
-</div>
-
-<div class="kpi" onclick="filterKPI('ENTREGADO')">
-<b>${entregado}</b>
-<div>Entregados</div>
-</div>
-`;
-
+<div class="kpi"><canvas id="k1"></canvas><b>${total}</b><div>Total</div></div>
+<div class="kpi"><canvas id="k2"></canvas><b>${pendientes}</b><div>Pendiente</div></div>
+<div class="kpi"><canvas id="k3"></canvas><b>${ruta}</b><div>En Ruta</div></div>
+<div class="kpi"><canvas id="k4"></canvas><b>${entregado}</b><div>Entregado</div></div>
+`;drawChart("k1",total,total,"#14b8a6");
+drawChart("k2",pendientes,total,"#facc15");
+drawChart("k3",ruta,total,"#ef4444");
+drawChart("k4",entregado,total,"#22c55e");
 }
 
-function filterKPI(status){
+function drawChart(id,val,total,color){
 
-KPI_FILTER=status;
+if(charts[id]) charts[id].destroy();
 
-applyFilters();
-
+charts[id]=new Chart(document.getElementById(id),{
+type:"doughnut",
+data:{
+datasets:[{
+data:[val,total-val],
+backgroundColor:[color,"#e5e7eb"]
+}]
+},
+options:{
+cutout:"70%",
+plugins:{legend:{display:false}}
+}
+});
 }
 
 /* ================= FOTO ================= */
 
 function verFoto(src){
-
 fotoGrande.src=src;
-
-btnDescargarFoto.onclick=()=>{
-window.open(src);
-};
-
+btnDescargarFoto.onclick=()=>window.open(src);
 fotoModal.style.display="flex";
-
 }
 
-btnCerrarFoto.onclick=()=>{
-fotoModal.style.display="none";
-};
+btnCerrarFoto.onclick=()=>fotoModal.style.display="none";
 
 /* ================= NUEVO ================= */
 
 btnNuevo.onclick=()=>{
-
 EDIT=null;
-
 modalForm.style.display="flex";
-
-};
+}
 
 /* ================= CANCELAR ================= */
 
 btnCancelar.onclick=()=>{
 modalForm.style.display="none";
-};
+}
+
+/* ================= EDITAR ================= */
+
+function openModal(row){
+
+EDIT=RAW.find(x=>x._row===row);
+if(!EDIT) return;
+
+modalForm.style.display="flex";
+
+mPedido.value=EDIT.pedido||"";
+mTipoDoc.value=EDIT.tipoDocumento||"";
+mNumeroDoc.value=EDIT.numeroDocumento||"";
+mCliente.value=EDIT.cliente||"";
+mDireccion.value=EDIT.direccion||"";
+mComuna.value=EDIT.comuna||"";
+mTransporte.value=EDIT.transporte||"";
+mCajas.value=EDIT.etiquetas||"";
+mStatus.value=EDIT.status||"";
+mResponsable.value=EDIT.responsable||"";
+mObs.value=EDIT.observaciones||"";
+}
 
 /* ================= GUARDAR ================= */
 
@@ -426,8 +372,7 @@ modalForm.style.display="none";
 await load();
 
 setLoading(btnGuardar,false);
-
-};
+}
 
 /* ================= ELIMINAR ================= */
 
@@ -448,7 +393,6 @@ row:row
 await load();
 
 setLoading(btn,false);
-
 }
 
 /* ================= EXPORTAR ================= */
@@ -470,8 +414,7 @@ const a=document.createElement("a");
 a.href=url;
 a.download="pedidos.csv";
 a.click();
-
-};
+}
 
 btnPDF.onclick=()=>{
 
@@ -480,15 +423,14 @@ const w=window.open("");
 let html="<h2>Pedidos</h2><table border=1>";
 
 FILT.forEach(r=>{
-html+=`<tr><td>${r.pedido}</td><td>${r.cliente}</td><td>${r.status}</td></tr>`;
+html+="<tr><td>${r.pedido}</td><td>${r.cliente}</td><td>${r.status}</td></tr>";
 });
 
 html+="</table>";
 
 w.document.write(html);
 w.print();
-
-};
+}
 
 /* ================= INIT ================= */
 
