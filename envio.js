@@ -107,6 +107,33 @@ function renderEstado(status){
  return `<span style="background:#000;color:${color};padding:3px 8px;border-radius:6px">${status||""}</span>`;
 }
 
+/* ================= KPI CIRCULAR ================= */
+
+function crearKPI(id,valor,total,color){
+
+ const ctx=document.getElementById(id);
+
+ if(!ctx) return;
+
+ new Chart(ctx,{
+  type:"doughnut",
+  data:{
+   datasets:[{
+    data:[valor,total-valor],
+    backgroundColor:[color,"#e5e7eb"],
+    borderWidth:0
+   }]
+  },
+  options:{
+   cutout:"70%",
+   plugins:{
+    legend:{display:false},
+    tooltip:{enabled:false}
+   }
+  }
+ });
+}
+
 /* ================= LOAD ================= */
 
 async function load(){
@@ -226,11 +253,11 @@ function renderTable(){
   </td>
 
   <td>
-  ${r.pdf?`<a href="${r.pdf}" target="_blank">📄</a>`:""}
+  ${r.pdf?`<a href="${r.pdf}" target="_blank" class="pdf-btn">PDF</a>`:""}
   </td>
 
   <td>
-  ${r.pdfTraslado?`<a href="${r.pdfTraslado}" target="_blank">📄</a>`:""}
+  ${r.pdfTraslado?`<a href="${r.pdfTraslado}" target="_blank" class="pdf-btn">PDF</a>`:""}
   </td>
 
   <td class="actions">
@@ -302,11 +329,37 @@ function renderKPIs(){
  const entregado=RAW.filter(x=>x.status==="ENTREGADO").length;
 
  kpis.innerHTML=`
- <div class="kpi"><b>${total}</b><div>Total</div></div>
- <div class="kpi"><b>${pendientes}</b><div>Pendiente</div></div>
- <div class="kpi"><b>${ruta}</b><div>En Ruta</div></div>
- <div class="kpi"><b>${entregado}</b><div>Entregado</div></div>
+
+ <div class="kpi">
+ <canvas id="k1"></canvas>
+ <b>${total}</b>
+ <div>Total</div>
+ </div>
+
+ <div class="kpi">
+ <canvas id="k2"></canvas>
+ <b>${pendientes}</b>
+ <div>Pendiente</div>
+ </div>
+
+ <div class="kpi">
+ <canvas id="k3"></canvas>
+ <b>${ruta}</b>
+ <div>En Ruta</div>
+ </div>
+
+ <div class="kpi">
+ <canvas id="k4"></canvas>
+ <b>${entregado}</b>
+ <div>Entregado</div>
+ </div>
+
  `;
+
+ crearKPI("k1",total,total,"#14b8a6");
+ crearKPI("k2",pendientes,total,"#facc15");
+ crearKPI("k3",ruta,total,"#ef4444");
+ crearKPI("k4",entregado,total,"#22c55e");
 }
 
 /* ================= FOTO ================= */
@@ -360,7 +413,6 @@ function openModal(row){
   }else{
    mHoraEntrega.value="";
   }
-
  }
 
  modalForm.style.display="flex";
@@ -458,7 +510,7 @@ btnExcel.onclick=()=>{
  a.click();
 };
 
-/* ================= PDF (BÁSICO) ================= */
+/* ================= PDF GENERAL ================= */
 
 btnPDF.onclick=()=>window.print();
 
