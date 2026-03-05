@@ -55,129 +55,111 @@ let EDIT=null;
 /* ================= UTIL ================= */
 
 function setLoading(btn,state){
-
-if(!btn) return;
-
-if(state){
-btn.classList.add("loading");
-btn.disabled=true;
-}else{
-btn.classList.remove("loading");
-btn.disabled=false;
-}
-
+ if(!btn) return;
+ if(state){
+  btn.classList.add("loading");
+  btn.disabled=true;
+ }else{
+  btn.classList.remove("loading");
+  btn.disabled=false;
+ }
 }
 
 function formatDate(d){
-
-if(!d) return "";
-
-return new Date(d).toLocaleDateString("es-CL");
-
+ if(!d) return "";
+ try{
+  return new Date(d).toLocaleDateString("es-CL");
+ }catch(e){
+  return d;
+ }
 }
 
-/* ================= SEMAFORO ATRASO ================= */
+/* ================= SEMAFORO ================= */
 
 function calcularSemaforo(fechaEntrega){
 
-if(!fechaEntrega) return "";
+ if(!fechaEntrega) return "";
 
-const hoy=new Date();
-const entrega=new Date(fechaEntrega);
+ const hoy=new Date();
+ const entrega=new Date(fechaEntrega);
 
-const diff=Math.floor((entrega-hoy)/(1000*60*60*24));
+ const diff=Math.floor((entrega-hoy)/(1000*60*60*24));
 
-if(diff>1) return `<span class="sem-verde">OK</span>`;
-if(diff===1) return `<span class="sem-amarillo">HOY</span>`;
-if(diff<0) return `<span class="sem-rojo">ATRASO</span>`;
+ if(diff>1) return `<span class="sem-verde">OK</span>`;
+ if(diff===1) return `<span class="sem-amarillo">HOY</span>`;
+ if(diff<0) return `<span class="sem-rojo">ATRASO</span>`;
 
-return `<span class="sem-azul">PROX</span>`;
-
+ return `<span class="sem-azul">PROX</span>`;
 }
 
 /* ================= ESTADO ================= */
 
 function renderEstado(status){
 
-let color="#fff";
+ let color="#fff";
 
-if(status==="PENDIENTE") color="#facc15";
-if(status==="EN RUTA") color="#ef4444";
-if(status==="ENTREGADO") color="#22c55e";
-if(status==="RECIBIDO") color="#fb923c";
-if(status==="CANCELADO") color="#3b82f6";
+ if(status==="PENDIENTE") color="#facc15";
+ if(status==="EN RUTA") color="#ef4444";
+ if(status==="ENTREGADO") color="#22c55e";
+ if(status==="RECIBIDO") color="#fb923c";
+ if(status==="CANCELADO") color="#3b82f6";
 
-return `<span style="background:#000;color:${color};padding:3px 8px;border-radius:6px">${status}</span>`;
-
+ return `<span style="background:#000;color:${color};padding:3px 8px;border-radius:6px">${status||""}</span>`;
 }
 
 /* ================= LOAD ================= */
 
 async function load(){
 
-setLoading(btnReload,true);
+ setLoading(btnReload,true);
 
-try{
+ try{
 
-const res=await fetch(API);
+  const res=await fetch(API);
+  RAW=await res.json();
 
-RAW=await res.json();
+  if(!Array.isArray(RAW)) RAW=[];
 
-if(!Array.isArray(RAW)) RAW=[];
+  applyFilters();
 
-applyFilters();
+ }catch(err){
+  console.error(err);
+ }
 
-}catch(err){
-
-console.error(err);
-
-}
-
-setLoading(btnReload,false);
-
+ setLoading(btnReload,false);
 }
 
 /* ================= FILTROS ================= */
 
 function applyFilters(){
 
-const q=(search.value||"").toLowerCase();
+ const q=(search.value||"").toLowerCase();
 
-FILT=RAW.filter(r=>{
+ FILT=RAW.filter(r=>{
 
-let ok=true;
+  let ok=true;
 
-if(q){
+  if(q){
+   const txt=((r.cliente||"")+(r.pedido||"")).toLowerCase();
+   ok=txt.includes(q);
+  }
 
-const txt=(r.cliente||"").toLowerCase()+(r.pedido||"");
-ok=txt.includes(q);
+  if(ok && fStatus.value){
+   ok=r.status===fStatus.value;
+  }
 
-}
+  if(ok && fDesde.value){
+   ok=new Date(r.fechaIngreso)>=new Date(fDesde.value);
+  }
 
-if(ok && fStatus.value){
+  if(ok && fHasta.value){
+   ok=new Date(r.fechaIngreso)<=new Date(fHasta.value);
+  }
 
-ok=r.status===fStatus.value;
+  return ok;
+ });
 
-}
-
-if(ok && fDesde.value){
-
-ok=new Date(r.fechaIngreso)>=new Date(fDesde.value);
-
-}
-
-if(ok && fHasta.value){
-
-ok=new Date(r.fechaIngreso)<=new Date(fHasta.value);
-
-}
-
-return ok;
-
-});
-
-render();
-
+ render();
 }
 
 search.oninput=applyFilters;
@@ -188,196 +170,154 @@ fHasta.onchange=applyFilters;
 /* ================= RENDER ================= */
 
 function render(){
-
-renderTable();
-renderCards();
-renderKPIs();
-
+ renderTable();
+ renderCards();
+ renderKPIs();
 }
 
 /* ================= TABLA ================= */
 
 function renderTable(){
 
-tbody.innerHTML="";
+ tbody.innerHTML="";
 
-if(!FILT.length){
+ if(!FILT.length){
+  tbody.innerHTML="<tr><td colspan='19'>Sin datos</td></tr>";
+  return;
+ }
 
-tbody.innerHTML="<tr><td colspan='19'>Sin datos</td></tr>";
-return;
+ FILT.forEach(r=>{
 
-}
+  const semaforo=calcularSemaforo(r.fechaEntrega);
 
-FILT.forEach(r=>{
+  const tr=`
+  <tr>
 
-const semaforo=calcularSemaforo(r.fechaEntrega);
+  <td>${formatDate(r.fechaIngreso)}</td>
+  <td>${r.pedido||""}</td>
+  <td>${r.tipoDocumento||""}</td>
+  <td>${r.numeroDocumento||""}</td>
+  <td>${r.cliente||""}</td>
 
-const tr=`
+  <td>
+  <a href="#" onclick="verMapa('${(r.direccion||"").replace(/'/g,"")}')">
+  ${r.direccion||""}
+  </a>
+  </td>
 
-<tr>
+  <td>${r.comuna||""}</td>
+  <td>${r.transporte||""}</td>
+  <td>${r.etiquetas||""}</td>
 
-<td>${formatDate(r.fechaIngreso)}</td>
-<td>${r.pedido||""}</td>
-<td>${r.tipoDocumento||""}</td>
-<td>${r.numeroDocumento||""}</td>
-<td>${r.cliente||""}</td>
+  <td>${renderEstado(r.status)}</td>
 
-<td>
-<a href="#" onclick="verMapa('${r.direccion}')">
-${r.direccion||""}
-</a>
-</td>
+  <td>${r.fechaEntrega||""}</td>
 
-<td>${r.comuna||""}</td>
-<td>${r.transporte||""}</td>
-<td>${r.etiquetas||""}</td>
+  <td>${r.alerta||""}</td>
 
-<td>${renderEstado(r.status)}</td>
+  <td>${r.diasAtraso||""}</td>
 
-<td>${r.fechaEntrega||""}</td>
+  <td>${semaforo}</td>
 
-<td>${r.alerta||""}</td>
+  <td>${r.responsable||""}</td>
 
-<td>${r.diasAtraso||""}</td>
+  <td>
+  ${r.foto?`<img src="${r.foto}" class="foto-thumb" onclick="verFoto('${r.foto}')">`:""}
+  </td>
 
-<td>${semaforo}</td>
+  <td>
+  ${r.pdf?`<a href="${r.pdf}" target="_blank">📄</a>`:""}
+  </td>
 
-<td>${r.responsable||""}</td>
+  <td>
+  ${r.pdfTraslado?`<a href="${r.pdfTraslado}" target="_blank">📄</a>`:""}
+  </td>
 
-<td>
+  <td class="actions">
+  <button onclick="openModal(${r._row})">✏️</button>
+  <button onclick="deleteRow(${r._row})">🗑️</button>
+  </td>
 
-${r.foto?`<img src="${r.foto}" class="foto-thumb" onclick="verFoto('${r.foto}')">`:""}
+  </tr>
+  `;
 
-</td>
-
-<td>
-
-${r.pdf?`<a href="${r.pdf}" target="_blank">📄</a>`:""}
-
-</td>
-
-<td>
-
-${r.pdfTraslado?`<a href="${r.pdfTraslado}" target="_blank">📄</a>`:""}
-
-</td>
-
-<td class="actions">
-
-<button onclick="openModal(${r._row})">✏️</button>
-
-<button onclick="deleteRow(${r._row},this)">🗑️</button>
-
-</td>
-
-</tr>
-`;
-
-tbody.insertAdjacentHTML("beforeend",tr);
-
-});
-
+  tbody.insertAdjacentHTML("beforeend",tr);
+ });
 }
 
 /* ================= TARJETAS MOBILE ================= */
 
 function renderCards(){
 
-mobileList.innerHTML="";
+ mobileList.innerHTML="";
 
-FILT.forEach(r=>{
+ FILT.forEach(r=>{
 
-const semaforo=calcularSemaforo(r.fechaEntrega);
+  const semaforo=calcularSemaforo(r.fechaEntrega);
 
-const card=`
+  const card=`
+  <div class="card">
 
-<div class="card">
+  <div class="card-title">
+  Pedido #${r.pedido||""}
+  ${renderEstado(r.status)}
+  </div>
 
-<div class="card-title">
+  <div><b>Cliente:</b> ${r.cliente||""}</div>
 
-Pedido #${r.pedido||""}
+  <div onclick="verMapa('${(r.direccion||"").replace(/'/g,"")}')">
+  <b>Dirección:</b> ${r.direccion||""}
+  </div>
 
-${renderEstado(r.status)}
+  <div><b>Comuna:</b> ${r.comuna||""}</div>
+  <div><b>Transporte:</b> ${r.transporte||""}</div>
+  <div><b>Cajas:</b> ${r.etiquetas||""}</div>
 
-</div>
+  <div><b>Semáforo:</b> ${semaforo}</div>
+  <div><b>Responsable:</b> ${r.responsable||""}</div>
 
-<div><b>Cliente:</b> ${r.cliente||""}</div>
+  <div style="margin-top:8px">
+  ${r.foto?`<img src="${r.foto}" class="foto-thumb" onclick="verFoto('${r.foto}')">`:""}
+  </div>
 
-<div onclick="verMapa('${r.direccion}')">
+  <div style="margin-top:10px;display:flex;gap:6px">
+  <button onclick="openModal(${r._row})">Editar</button>
+  <button onclick="deleteRow(${r._row})">Eliminar</button>
+  </div>
 
-<b>Dirección:</b> ${r.direccion||""}
+  </div>
+  `;
 
-</div>
-
-<div><b>Comuna:</b> ${r.comuna||""}</div>
-
-<div><b>Transporte:</b> ${r.transporte||""}</div>
-
-<div><b>Cajas:</b> ${r.etiquetas||""}</div>
-
-<div><b>Semáforo:</b> ${semaforo}</div>
-
-<div><b>Responsable:</b> ${r.responsable||""}</div>
-
-<div style="margin-top:8px">
-
-${r.foto?`<img src="${r.foto}" class="foto-thumb" onclick="verFoto('${r.foto}')">`:""}
-
-</div>
-
-<div style="margin-top:10px;display:flex;gap:6px">
-
-<button onclick="openModal(${r._row})">Editar</button>
-
-<button onclick="deleteRow(${r._row})">Eliminar</button>
-
-</div>
-
-</div>
-`;
-
-mobileList.insertAdjacentHTML("beforeend",card);
-
-});
-
+  mobileList.insertAdjacentHTML("beforeend",card);
+ });
 }
 
 /* ================= KPIS ================= */
 
 function renderKPIs(){
 
-const total=RAW.length;
+ const total=RAW.length;
+ const pendientes=RAW.filter(x=>x.status==="PENDIENTE").length;
+ const ruta=RAW.filter(x=>x.status==="EN RUTA").length;
+ const entregado=RAW.filter(x=>x.status==="ENTREGADO").length;
 
-const pendientes=RAW.filter(x=>x.status==="PENDIENTE").length;
-
-const ruta=RAW.filter(x=>x.status==="EN RUTA").length;
-
-const entregado=RAW.filter(x=>x.status==="ENTREGADO").length;
-
-kpis.innerHTML=`
-
-<div class="kpi"><b>${total}</b><div>Total</div></div>
-
-<div class="kpi"><b>${pendientes}</b><div>Pendiente</div></div>
-
-<div class="kpi"><b>${ruta}</b><div>En Ruta</div></div>
-
-<div class="kpi"><b>${entregado}</b><div>Entregado</div></div>
-
-`;
-
+ kpis.innerHTML=`
+ <div class="kpi"><b>${total}</b><div>Total</div></div>
+ <div class="kpi"><b>${pendientes}</b><div>Pendiente</div></div>
+ <div class="kpi"><b>${ruta}</b><div>En Ruta</div></div>
+ <div class="kpi"><b>${entregado}</b><div>Entregado</div></div>
+ `;
 }
 
 /* ================= FOTO ================= */
 
 function verFoto(src){
 
-fotoGrande.src=src;
+ fotoGrande.src=src;
 
-btnDescargarFoto.onclick=()=>window.open(src);
+ btnDescargarFoto.onclick=()=>window.open(src);
 
-fotoModal.style.display="flex";
-
+ fotoModal.style.display="flex";
 }
 
 btnCerrarFoto.onclick=()=>fotoModal.style.display="none";
@@ -386,23 +326,67 @@ btnCerrarFoto.onclick=()=>fotoModal.style.display="none";
 
 function verMapa(dir){
 
-mapFrame.src="https://maps.google.com/maps?q="+encodeURIComponent(dir)+"&output=embed";
+ mapFrame.src="https://maps.google.com/maps?q="+encodeURIComponent(dir)+"&output=embed";
 
-mapModal.style.display="flex";
-
+ mapModal.style.display="flex";
 }
 
 btnCerrarMapa.onclick=()=>mapModal.style.display="none";
 
-/* ================= MODAL ================= */
+/* ================= MODAL EDITAR ================= */
 
 function openModal(row){
 
-EDIT=row;
+ EDIT=row;
 
-modalForm.style.display="flex";
+ const data=RAW.find(r=>Number(r._row)===Number(row));
 
+ if(data){
+
+  mPedido.value=data.pedido||"";
+  mTipoDoc.value=data.tipoDocumento||"";
+  mNumeroDoc.value=data.numeroDocumento||"";
+  mCliente.value=data.cliente||"";
+  mDireccion.value=data.direccion||"";
+  mComuna.value=data.comuna||"";
+  mTransporte.value=data.transporte||"";
+  mCajas.value=data.etiquetas||"";
+  mStatus.value=data.status||"PENDIENTE";
+  mResponsable.value=data.responsable||"";
+  mObs.value=data.observaciones||"";
+
+  if(data.fechaEntrega){
+   mHoraEntrega.value=new Date(data.fechaEntrega).toISOString().slice(0,16);
+  }else{
+   mHoraEntrega.value="";
+  }
+
+ }
+
+ modalForm.style.display="flex";
 }
+
+/* ================= NUEVO ================= */
+
+btnNuevo.onclick=()=>{
+
+ EDIT=null;
+
+ mPedido.value="";
+ mNumeroDoc.value="";
+ mCliente.value="";
+ mDireccion.value="";
+ mComuna.value="";
+ mTransporte.value="";
+ mCajas.value="";
+ mHoraEntrega.value="";
+ mResponsable.value="";
+ mObs.value="";
+
+ modalForm.style.display="flex";
+};
+
+/* ================= CANCELAR ================= */
 
 btnCancelar.onclick=()=>modalForm.style.display="none";
 
@@ -410,85 +394,76 @@ btnCancelar.onclick=()=>modalForm.style.display="none";
 
 btnGuardar.onclick=async()=>{
 
-const data={
+ const data={
+  pedido:mPedido.value,
+  tipoDocumento:mTipoDoc.value,
+  numeroDocumento:mNumeroDoc.value,
+  cliente:mCliente.value,
+  direccion:mDireccion.value,
+  comuna:mComuna.value,
+  transporte:mTransporte.value,
+  etiquetas:mCajas.value,
+  status:mStatus.value,
+  fechaEntrega:mHoraEntrega.value,
+  responsable:mResponsable.value,
+  observaciones:mObs.value,
+  row:EDIT
+ };
 
-pedido:mPedido.value,
-tipoDocumento:mTipoDoc.value,
-numeroDocumento:mNumeroDoc.value,
-cliente:mCliente.value,
-direccion:mDireccion.value,
-comuna:mComuna.value,
-transporte:mTransporte.value,
-etiquetas:mCajas.value,
-status:mStatus.value,
-fechaEntrega:mHoraEntrega.value,
-responsable:mResponsable.value,
-observaciones:mObs.value,
-row:EDIT
+ await fetch(API,{
+  method:"POST",
+  body:JSON.stringify(data)
+ });
 
-};
+ modalForm.style.display="none";
 
-await fetch(API,{
-method:"POST",
-body:JSON.stringify(data)
-});
-
-modalForm.style.display="none";
-
-load();
-
+ load();
 };
 
 /* ================= ELIMINAR ================= */
 
 async function deleteRow(row){
 
-if(!confirm("Eliminar registro?")) return;
+ if(!confirm("Eliminar registro?")) return;
 
-await fetch(API,{
-method:"POST",
-body:JSON.stringify({
-action:"delete",
-row:row
-})
-});
+ await fetch(API,{
+  method:"POST",
+  body:JSON.stringify({
+   action:"delete",
+   row:row
+  })
+ });
 
-load();
-
+ load();
 }
 
-/* ================= EXPORT ================= */
+/* ================= EXPORT EXCEL ================= */
 
 btnExcel.onclick=()=>{
 
-let csv="";
+ let csv="";
 
-FILT.forEach(r=>{
-csv+=Object.values(r).join(",")+"\n";
-});
+ FILT.forEach(r=>{
+  csv+=Object.values(r).join(",")+"\n";
+ });
 
-const blob=new Blob([csv]);
+ const blob=new Blob([csv]);
 
-const a=document.createElement("a");
+ const a=document.createElement("a");
 
-a.href=URL.createObjectURL(blob);
+ a.href=URL.createObjectURL(blob);
 
-a.download="pedidos.csv";
+ a.download="pedidos.csv";
 
-a.click();
-
+ a.click();
 };
+
+/* ================= PDF (BÁSICO) ================= */
+
+btnPDF.onclick=()=>window.print();
 
 /* ================= INIT ================= */
 
 btnReload.onclick=load;
-
-btnNuevo.onclick=()=>{
-
-EDIT=null;
-
-modalForm.style.display="flex";
-
-};
 
 load();
