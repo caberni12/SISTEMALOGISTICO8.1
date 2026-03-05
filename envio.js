@@ -40,8 +40,6 @@ const mPdf=document.getElementById("mPdf");
 
 const kpis=document.getElementById("kpis");
 
-/* FOTO MODAL */
-
 const fotoModal=document.getElementById("fotoModal");
 const fotoGrande=document.getElementById("fotoGrande");
 const btnCerrarFoto=document.getElementById("btnCerrarFoto");
@@ -51,14 +49,15 @@ const btnDescargarFoto=document.getElementById("btnDescargarFoto");
 
 let RAW=[];
 let FILT=[];
-let charts={};
 let EDIT=null;
-let KPI_FILTER="";
+let charts={};
 
 /* ================= UTIL ================= */
 
 function setLoading(btn,state){
+
 if(!btn) return;
+
 if(state){
 btn.classList.add("loading");
 btn.disabled=true;
@@ -66,6 +65,7 @@ btn.disabled=true;
 btn.classList.remove("loading");
 btn.disabled=false;
 }
+
 }
 
 function formatDate(d){
@@ -73,16 +73,8 @@ if(!d) return "";
 return new Date(d).toLocaleDateString("es-CL");
 }
 
-function toBase64(file){
-return new Promise((resolve,reject)=>{
-const reader=new FileReader();
-reader.onload=()=>resolve(reader.result);
-reader.onerror=reject;
-reader.readAsDataURL(file);
-});
-}
-
 function renderEstado(status){
+
 let color="#fff";
 
 if(status==="PENDIENTE") color="#facc15";
@@ -91,7 +83,8 @@ if(status==="ENTREGADO") color="#22c55e";
 if(status==="RECIBIDO") color="#fb923c";
 if(status==="CANCELADO") color="#3b82f6";
 
-return "<span style="background:#000;color:${color};padding:3px 10px;border-radius:6px">${status}</span>";
+return `<span style="background:#000;color:${color};padding:3px 8px;border-radius:6px">${status}</span>`;
+
 }
 
 /* ================= LOAD ================= */
@@ -110,10 +103,13 @@ if(!Array.isArray(RAW)) RAW=[];
 applyFilters();
 
 }catch(err){
+
 console.error(err);
+
 }
 
 setLoading(btnReload,false);
+
 }
 
 /* ================= FILTROS ================= */
@@ -121,45 +117,25 @@ setLoading(btnReload,false);
 function applyFilters(){
 
 const q=(search.value||"").toLowerCase();
-const desde=fDesde.value?new Date(fDesde.value):null;
-const hasta=fHasta.value?new Date(fHasta.value):null;
 
 FILT=RAW.filter(r=>{
 
 const txt=(r.cliente||"").toLowerCase()+(r.pedido||"");
 
 const okText=!q || txt.includes(q);
+
 const okStatus=!fStatus.value || r.status===fStatus.value;
 
-let okFecha=true;
-
-if(desde || hasta){
-
-const fecha=new Date(r.fechaIngreso);
-
-if(desde && fecha<desde) okFecha=false;
-if(hasta && fecha>hasta) okFecha=false;
-
-}
-
-let okKpi=true;
-
-if(KPI_FILTER){
-okKpi=r.status===KPI_FILTER;
-}
-
-return okText && okStatus && okFecha && okKpi;
+return okText && okStatus;
 
 });
 
 render();
-renderKPIs();
+
 }
 
 search.oninput=applyFilters;
 fStatus.onchange=applyFilters;
-fDesde.onchange=applyFilters;
-fHasta.onchange=applyFilters;
 
 /* ================= RENDER ================= */
 
@@ -167,6 +143,7 @@ function render(){
 
 renderTable();
 renderCards();
+renderKPIs();
 
 }
 
@@ -177,19 +154,19 @@ function renderTable(){
 tbody.innerHTML="";
 
 if(!FILT.length){
+
 tbody.innerHTML="<tr><td colspan='19'>Sin datos</td></tr>";
 return;
+
 }
 
 FILT.forEach(r=>{
 
-const pdfIcon=r.pdf
-? "<a href="${r.pdf}" target="_blank" class="pdf-btn">PDF</a>"
-: "";
-
 const tr=`
 
-<tr><td>${formatDate(r.fechaIngreso)}</td>
+<tr>
+
+<td>${formatDate(r.fechaIngreso)}</td>
 <td>${r.pedido||""}</td>
 <td>${r.tipoDocumento||""}</td>
 <td>${r.numeroDocumento||""}</td>
@@ -203,11 +180,25 @@ const tr=`
 <td>${r.alerta||""}</td>
 <td>${r.diasAtraso||""}</td>
 <td>${r.semaforo||""}</td>
-<td>${r.responsable||""}</td><td>${r.foto?`<img src="${r.foto}" class="foto-thumb" onclick="verFoto('${r.foto}')">`:""}</td><td>${pdfIcon}</td><td>${r.pdfTraslado?`<a href="${r.pdfTraslado}" target="_blank">📄</a>`:""}</td><td class="actions">
+<td>${r.responsable||""}</td>
+
+<td>${r.foto?`<img src="${r.foto}" class="foto-thumb" onclick="verFoto('${r.foto}')">`:""}</td>
+
+<td>${r.pdf?`<a href="${r.pdf}" target="_blank">📄</a>`:""}</td>
+
+<td>${r.pdfTraslado?`<a href="${r.pdfTraslado}" target="_blank">📄</a>`:""}</td>
+
+<td class="actions">
+
 <button onclick="openModal(${r._row})">✏️</button>
 <button onclick="deleteRow(${r._row},this)">🗑️</button>
-</td></tr>
-`;tbody.insertAdjacentHTML("beforeend",tr);
+
+</td>
+
+</tr>
+`;
+
+tbody.insertAdjacentHTML("beforeend",tr);
 
 });
 
@@ -223,20 +214,39 @@ FILT.forEach(r=>{
 
 const card=`
 
-<div style="background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 4px 10px rgba(0,0,0,.08)"><div style="display:flex;justify-content:space-between"><b>Pedido #${r.pedido||""}</b>
+<div class="card">
+
+<div class="card-title">
+
+Pedido #${r.pedido||""}
+
 ${renderEstado(r.status)}
 
-</div><div style="margin-top:6px"><b>Cliente:</b> ${r.cliente||""}</div>
+</div>
+
+<div><b>Cliente:</b> ${r.cliente||""}</div>
 <div><b>Dirección:</b> ${r.direccion||""}</div>
 <div><b>Comuna:</b> ${r.comuna||""}</div>
 <div><b>Transporte:</b> ${r.transporte||""}</div>
 <div><b>Cajas:</b> ${r.etiquetas||""}</div>
-<div><b>Responsable:</b> ${r.responsable||""}</div><div style="margin-top:8px">${r.foto?"<img src="${r.foto}" class="foto-thumb" onclick="verFoto('${r.foto}')">":""}
+<div><b>Responsable:</b> ${r.responsable||""}</div>
 
-</div><div style="margin-top:10px;display:flex;gap:6px"><button onclick="openModal(${r._row})">Editar</button>
+<div style="margin-top:8px">
+
+${r.foto?`<img src="${r.foto}" class="foto-thumb" onclick="verFoto('${r.foto}')">`:""}
+
+</div>
+
+<div style="margin-top:10px;display:flex;gap:6px">
+
+<button onclick="openModal(${r._row})">Editar</button>
 <button onclick="deleteRow(${r._row},this)">Eliminar</button>
 
-</div></div>`;
+</div>
+
+</div>
+
+`;
 
 mobileList.insertAdjacentHTML("beforeend",card);
 
@@ -259,178 +269,47 @@ kpis.innerHTML=`
 <div class="kpi"><canvas id="k2"></canvas><b>${pendientes}</b><div>Pendiente</div></div>
 <div class="kpi"><canvas id="k3"></canvas><b>${ruta}</b><div>En Ruta</div></div>
 <div class="kpi"><canvas id="k4"></canvas><b>${entregado}</b><div>Entregado</div></div>
-`;drawChart("k1",total,total,"#14b8a6");
-drawChart("k2",pendientes,total,"#facc15");
-drawChart("k3",ruta,total,"#ef4444");
-drawChart("k4",entregado,total,"#22c55e");
-}
 
-function drawChart(id,val,total,color){
+`;
 
-if(charts[id]) charts[id].destroy();
-
-charts[id]=new Chart(document.getElementById(id),{
-type:"doughnut",
-data:{
-datasets:[{
-data:[val,total-val],
-backgroundColor:[color,"#e5e7eb"]
-}]
-},
-options:{
-cutout:"70%",
-plugins:{legend:{display:false}}
-}
-});
 }
 
 /* ================= FOTO ================= */
 
 function verFoto(src){
+
 fotoGrande.src=src;
-btnDescargarFoto.onclick=()=>window.open(src);
+
+btnDescargarFoto.onclick=()=>{
+window.open(src);
+};
+
 fotoModal.style.display="flex";
+
 }
 
-btnCerrarFoto.onclick=()=>fotoModal.style.display="none";
+btnCerrarFoto.onclick=()=>{
+
+fotoModal.style.display="none";
+
+};
 
 /* ================= NUEVO ================= */
 
 btnNuevo.onclick=()=>{
+
 EDIT=null;
 modalForm.style.display="flex";
-}
+
+};
 
 /* ================= CANCELAR ================= */
 
 btnCancelar.onclick=()=>{
+
 modalForm.style.display="none";
-}
-
-/* ================= EDITAR ================= */
-
-function openModal(row){
-
-EDIT=RAW.find(x=>x._row===row);
-if(!EDIT) return;
-
-modalForm.style.display="flex";
-
-mPedido.value=EDIT.pedido||"";
-mTipoDoc.value=EDIT.tipoDocumento||"";
-mNumeroDoc.value=EDIT.numeroDocumento||"";
-mCliente.value=EDIT.cliente||"";
-mDireccion.value=EDIT.direccion||"";
-mComuna.value=EDIT.comuna||"";
-mTransporte.value=EDIT.transporte||"";
-mCajas.value=EDIT.etiquetas||"";
-mStatus.value=EDIT.status||"";
-mResponsable.value=EDIT.responsable||"";
-mObs.value=EDIT.observaciones||"";
-}
-
-/* ================= GUARDAR ================= */
-
-btnGuardar.onclick=async()=>{
-
-setLoading(btnGuardar,true);
-
-let foto="";
-let pdf="";
-
-if(mFotos.files.length)
-foto=await toBase64(mFotos.files[0]);
-
-if(mPdf.files.length)
-pdf=await toBase64(mPdf.files[0]);
-
-const payload={
-
-action:EDIT?"update":"add",
-row:EDIT?EDIT._row:null,
-
-PEDIDO:mPedido.value,
-CLIENTE:mCliente.value,
-DIRECCION:mDireccion.value,
-COMUNA:mComuna.value,
-TRANSPORTE:mTransporte.value,
-ETIQUETAS:mCajas.value,
-STATUS:mStatus.value,
-RESPONSABLE:mResponsable.value,
-FOTO:foto,
-PDF:pdf
 
 };
-
-await fetch(API,{
-method:"POST",
-body:JSON.stringify(payload)
-});
-
-modalForm.style.display="none";
-
-await load();
-
-setLoading(btnGuardar,false);
-}
-
-/* ================= ELIMINAR ================= */
-
-async function deleteRow(row,btn){
-
-if(!confirm("Eliminar pedido?")) return;
-
-setLoading(btn,true);
-
-await fetch(API,{
-method:"POST",
-body:JSON.stringify({
-action:"delete",
-row:row
-})
-});
-
-await load();
-
-setLoading(btn,false);
-}
-
-/* ================= EXPORTAR ================= */
-
-btnExcel.onclick=()=>{
-
-let rows=[["Pedido","Cliente","Estado"]];
-
-FILT.forEach(r=>{
-rows.push([r.pedido,r.cliente,r.status]);
-});
-
-const csv=rows.map(r=>r.join(";")).join("\n");
-
-const blob=new Blob([csv]);
-const url=URL.createObjectURL(blob);
-
-const a=document.createElement("a");
-a.href=url;
-a.download="pedidos.csv";
-a.click();
-}
-
-btnPDF.onclick=()=>{
-
-const w=window.open("");
-
-let html="<h2>Pedidos</h2><table border=1>";
-
-FILT.forEach(r=>{
-html+="<tr><td>${r.pedido}</td><td>${r.cliente}</td><td>${r.status}</td></tr>";
-});
-
-html+="</table>";
-
-w.document.write(html);
-w.print();
-}
 
 /* ================= INIT ================= */
 
