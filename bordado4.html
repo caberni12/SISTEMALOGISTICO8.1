@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Sistema Logístico</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+
+:root{
+--primary:#14b8a6;
+--primary-dark:#0d9488;
+--danger:#dc2626;
+--warning:#facc15;
+--bg:#f8fafc;
+--card:#ffffff;
+--shadow:0 10px 25px rgba(0,0,0,.08);
+}
+
+body{
+margin:0;
+font-family:Arial, sans-serif;
+background:var(--bg);
+padding:20px;
+}
+
+/* HEADER */
+
+.header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+flex-wrap:wrap;
+margin-bottom:20px;
+}
+
+/* BOTONES */
+
+button{
+border:0;
+border-radius:12px;
+padding:8px 14px;
+font-weight:700;
+cursor:pointer;
+background:var(--primary);
+color:#fff;
+display:flex;
+align-items:center;
+gap:6px;
+transition:.2s;
+}
+
+button:hover{
+background:var(--primary-dark);
+transform:scale(1.04);
+}
+
+button.loading .btn-text{display:none}
+button.loading .btn-loader{display:inline-block}
+
+.btn-loader{
+display:none;
+width:16px;
+height:16px;
+border:3px solid rgba(255,255,255,.4);
+border-top:3px solid #fff;
+border-radius:50%;
+animation:spin .8s linear infinite;
+}
+
+@keyframes spin{
+to{transform:rotate(360deg)}
+}
+
+/* FILTROS */
+
+.filters{
+display:flex;
+flex-wrap:wrap;
+gap:10px;
+margin-bottom:20px;
+}
+
+input,select,textarea{
+padding:9px 12px;
+border-radius:10px;
+border:1px solid #e2e8f0;
+width:100%;
+font-size:14px;
+}
+
+/* CONTADORES */
+
+.stats{
+display:flex;
+gap:30px;
+margin-bottom:20px;
+font-weight:bold;
+font-size:18px;
+}
+
+/* TARJETAS */
+
+.cards-grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
+gap:20px;
+}
+
+/* TARJETA */
+
+.card{
+background:var(--card);
+border-radius:18px;
+padding:20px;
+box-shadow:var(--shadow);
+border-left:8px solid #ccc;
+transition:.25s;
+}
+
+.card:hover{
+transform:translateY(-4px);
+box-shadow:0 16px 35px rgba(0,0,0,.12);
+}
+
+/* ALERTAS */
+
+.card-alerta{
+background:#fef9c3;
+}
+
+.card-atraso{
+background:#fee2e2;
+border-left-color:#dc2626;
+}
+
+/* TITULO PEDIDO */
+
+.pedido-numero{
+font-size:32px;
+font-weight:900;
+margin-bottom:6px;
+color:#111827;
+}
+
+.cliente-destacado{
+font-size:22px;
+font-weight:800;
+margin-bottom:10px;
+color:#111827;
+}
+
+/* BADGES */
+
+.estado-wrap{
+display:flex;
+gap:8px;
+flex-wrap:wrap;
+margin-bottom:10px;
+}
+
+.badge{
+padding:6px 12px;
+border-radius:20px;
+font-weight:700;
+font-size:12px;
+color:#fff;
+}
+
+.badge-PENDIENTE{background:#2563eb}
+.badge-EN_RUTA{background:#dc2626}
+.badge-RECIBIDO{background:#7c3aed}
+.badge-ENTREGADO{background:#16a34a}
+.badge-CANCELADO{background:#6b7280}
+
+.badge-entrega{background:#16a34a}
+.badge-alerta{background:#f59e0b}
+.badge-atraso{background:#dc2626}
+
+/* CAJAS */
+
+.cajas-box{
+background:#111827;
+color:#fff;
+text-align:center;
+padding:12px;
+border-radius:14px;
+margin-top:10px;
+}
+
+.cajas-box span{
+font-size:36px;
+font-weight:900;
+display:block;
+}
+
+/* FOTOS */
+
+.photo-wrap{
+display:flex;
+gap:8px;
+flex-wrap:wrap;
+margin-top:10px;
+}
+
+.photo-wrap img{
+width:80px;
+height:80px;
+object-fit:cover;
+border-radius:10px;
+cursor:pointer;
+transition:.2s;
+}
+
+.photo-wrap img:hover{
+transform:scale(1.15);
+}
+
+/* PDF */
+
+.pdf-wrap{
+margin-top:10px;
+display:flex;
+gap:6px;
+flex-wrap:wrap;
+}
+
+.pdf-wrap a{
+background:#0f172a;
+color:#fff;
+padding:6px 10px;
+border-radius:8px;
+font-size:12px;
+text-decoration:none;
+transition:.2s;
+}
+
+.pdf-wrap a:hover{
+background:#000;
+}
+
+/* MAPA */
+
+.map-container{
+display:none;
+margin-top:10px;
+}
+
+.map-container iframe{
+width:100%;
+height:220px;
+border-radius:12px;
+border:0;
+}
+
+/* MODAL */
+
+.modal{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.7);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:9999;
+padding:20px;
+}
+
+.modal-box{
+background:#fff;
+padding:20px;
+border-radius:16px;
+width:900px;
+max-width:95%;
+max-height:90vh;
+overflow:auto;
+box-shadow:0 20px 40px rgba(0,0,0,.2);
+}
+
+/* GRID FORM */
+
+.form-grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:12px;
+}
+
+.full{
+grid-column:1 / -1;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="header">
+
+<h2>🚚 Sistema Logístico</h2>
+
+<div style="display:flex;gap:10px">
+
+<button onclick="toggleFullscreen()">Modo TV</button>
+
+<button id="btnReload">
+<span class="btn-text">Recargar</span>
+<span class="btn-loader"></span>
+</button>
+
+</div>
+
+</div>
+
+<!-- FILTROS -->
+
+<div class="filters">
+
+<input id="fBuscar" placeholder="Buscar pedido, cliente, comuna">
+
+<select id="fStatus">
+<option value="">Todos</option>
+<option>PENDIENTE</option>
+<option>EN RUTA</option>
+<option>RECIBIDO</option>
+<option>ENTREGADO</option>
+<option>CANCELADO</option>
+</select>
+
+<input type="date" id="fDesde">
+<input type="date" id="fHasta">
+
+</div>
+
+<!-- CONTADORES -->
+
+<div class="stats">
+
+<div>Pedidos: <span id="totalPedidos">0</span></div>
+<div>Cajas: <span id="totalCajas">0</span></div>
+
+</div>
+
+<!-- TARJETAS -->
+
+<div class="cards-grid" id="cardsGrid"></div>
+
+<!-- MODAL IMAGEN -->
+
+<div class="modal" id="imgModal">
+<img id="imgGrande" style="max-width:90vw;max-height:85vh;border-radius:12px;">
+</div>
+
+<!-- MODAL EDICION -->
+
+<div class="modal" id="editModal">
+
+<div class="modal-box">
+
+<h3>Editar Pedido</h3>
+
+<div class="form-grid">
+
+<input id="mFechaIngreso" type="date" placeholder="Fecha ingreso">
+<input id="mPedido" placeholder="Pedido">
+
+<input id="mTipoDocumento" placeholder="Tipo documento">
+<input id="mNumeroDocumento" placeholder="Número documento">
+
+<input id="mCliente" placeholder="Cliente">
+<input id="mDireccion" placeholder="Dirección">
+
+<input id="mComuna" placeholder="Comuna">
+<input id="mTransporte" placeholder="Transporte">
+
+<input id="mCajas" type="number" placeholder="Cajas">
+<input id="mResponsable" placeholder="Responsable">
+
+<input id="mFechaEntrega" type="date" placeholder="Fecha estimada entrega">
+
+<select id="mStatus">
+<option>PENDIENTE</option>
+<option>EN RUTA</option>
+<option>RECIBIDO</option>
+<option>ENTREGADO</option>
+<option>CANCELADO</option>
+</select>
+
+<input id="mStatusEntrega" placeholder="Status entrega">
+<input id="mSemaforo" placeholder="Semáforo">
+<input id="mDiasAtraso" placeholder="Días atraso">
+
+<textarea id="mObservaciones" rows="3" class="full" placeholder="Observaciones"></textarea>
+
+<input id="mFoto" placeholder="URL Foto">
+<input id="mPDF" placeholder="PDF">
+<input id="mPDFTraslado" placeholder="PDF Traslado">
+
+</div>
+
+<br>
+
+<button id="btnGuardar">
+<span class="btn-text">Guardar</span>
+<span class="btn-loader"></span>
+</button>
+
+<button onclick="closeEdit()">Cerrar</button>
+
+</div>
+
+</div>
+
+<audio id="alertSound">
+<source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg">
+</audio>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="envio2.js"></script>
+
+</body>
+</html>

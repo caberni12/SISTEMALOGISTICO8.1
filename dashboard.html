@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+
+<meta charset="UTF-8">
+<title>Dashboard Logístico</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+  /* ================= VARIABLES ================= */
+  
+  :root{
+   --bg:#f8fafc;
+   --card:#ffffff;
+   --txt:#0f172a;
+   --muted:#64748b;
+   --pri:#14b8a6;
+   --pri-dark:#0d9488;
+   --border:#cbd5e1;
+  }
+  
+  /* ================= BASE ================= */
+  
+  *{box-sizing:border-box}
+  
+  body{
+   margin:0;
+   font-family:Inter,Arial;
+   background:var(--bg);
+   color:var(--txt);
+   padding:16px;
+  }
+  
+  h2{
+   margin:0 0 14px 0;
+  }
+  
+  /* ================= KPI ================= */
+  
+  #kpis{
+   display:grid;
+   grid-template-columns:repeat(6,1fr);
+   gap:12px;
+   margin-bottom:16px;
+  }
+  
+  .kpi{
+   background:#fff;
+   border-radius:12px;
+   padding:10px;
+   text-align:center;
+   box-shadow:0 4px 10px rgba(0,0,0,.08);
+   cursor:pointer;
+  }
+  
+  .kpi canvas{
+   width:55px!important;
+   height:55px!important;
+   margin:auto;
+  }
+  
+  /* ================= FILTROS ================= */
+  
+  .filters{
+   display:flex;
+   gap:8px;
+   flex-wrap:wrap;
+   margin-bottom:14px;
+  }
+  
+  input,select{
+   padding:8px 10px;
+   border-radius:10px;
+   border:1px solid var(--border);
+   font-size:13px;
+   background:#fff;
+  }
+  
+  /* ================= BOTONES ================= */
+  
+  button{
+   padding:8px 12px;
+   border-radius:10px;
+   border:0;
+   background:var(--pri);
+   color:#fff;
+   font-weight:600;
+   cursor:pointer;
+   position:relative;
+   font-size:13px;
+  }
+  
+  button:hover{
+   background:var(--pri-dark);
+  }
+  
+  /* ================= LOADER BOTON ================= */
+  
+  button.loading{
+   pointer-events:none;
+   opacity:.8;
+  }
+  
+  button.loading::after{
+   content:"";
+   width:14px;
+   height:14px;
+   border:3px solid #fff;
+   border-top-color:transparent;
+   border-radius:50%;
+   position:absolute;
+   right:8px;
+   top:50%;
+   transform:translateY(-50%);
+   animation:spin .8s linear infinite;
+  }
+  
+  @keyframes spin{
+   to{transform:translateY(-50%) rotate(360deg)}
+  }
+  
+  /* ================= TABLA ================= */
+  
+  .table-scroll{
+   max-height:70vh;
+   overflow:auto;
+   border-radius:16px;
+  }
+  
+  table{
+   width:100%;
+   border-collapse:collapse;
+   background:var(--card);
+   box-shadow:0 8px 24px rgba(0,0,0,.08);
+  }
+  
+  th,td{
+   padding:6px 10px;
+   border-bottom:1px solid var(--border);
+   font-size:13px;
+   line-height:1.2;
+   white-space:nowrap;
+  }
+  
+  th{
+   color:var(--muted);
+   position:sticky;
+   top:0;
+   background:#fff;
+   font-size:12px;
+  }
+  
+  /* ================= CONTROL COLUMNAS ================= */
+  
+  /* CLIENTE */
+  
+  td:nth-child(5){
+   max-width:180px;
+   overflow:hidden;
+   text-overflow:ellipsis;
+  }
+  
+  /* DIRECCION */
+  
+  td:nth-child(6){
+   max-width:320px;
+   overflow:hidden;
+   text-overflow:ellipsis;
+   white-space:nowrap;
+  }
+  
+  /* COMUNA */
+  
+  td:nth-child(7){
+   max-width:140px;
+   overflow:hidden;
+   text-overflow:ellipsis;
+  }
+  
+  /* TRANSPORTE */
+  
+  td:nth-child(8){
+   max-width:140px;
+   overflow:hidden;
+   text-overflow:ellipsis;
+  }
+  
+  /* RESPONSABLE */
+  
+  td:nth-child(15){
+   max-width:150px;
+   overflow:hidden;
+   text-overflow:ellipsis;
+  }
+  
+  /* FILA HOVER */
+  
+  tbody tr:hover{
+   background:#f1f5f9;
+  }
+  
+  /* ================= ACCIONES ================= */
+  
+  .actions{
+   display:flex;
+   gap:4px;
+  }
+  
+  .actions button{
+   width:28px;
+   height:28px;
+   padding:0;
+   display:flex;
+   align-items:center;
+   justify-content:center;
+   font-size:14px;
+  }
+  
+  /* ================= FOTO ================= */
+  
+  .foto-thumb{
+   width:38px;
+   height:38px;
+   object-fit:cover;
+   border-radius:6px;
+   border:1px solid var(--border);
+   cursor:pointer;
+  }
+  
+  /* ================= PDF ================= */
+  
+  .pdf-btn{
+   background:#0f172a;
+   color:#fff;
+   padding:4px 7px;
+   border-radius:6px;
+   font-size:11px;
+   text-decoration:none;
+  }
+  
+  /* ================= SEMAFORO ================= */
+  
+  .semaforo{
+   padding:3px 8px;
+   border-radius:6px;
+   font-size:11px;
+   font-weight:600;
+   color:#fff;
+  }
+  
+  .sem-verde{background:#16a34a}
+  .sem-amarillo{background:#eab308}
+  .sem-rojo{background:#dc2626}
+  .sem-azul{background:#2563eb}
+  
+  /* ================= MODAL ================= */
+  
+  .modal{
+   position:fixed;
+   inset:0;
+   background:rgba(0,0,0,.65);
+   display:none;
+   align-items:center;
+   justify-content:center;
+   z-index:9999;
+  }
+  
+  .modal-content{
+   background:#fff;
+   padding:22px;
+   border-radius:16px;
+   max-width:95%;
+   max-height:90vh;
+   overflow:auto;
+  }
+  
+  /* ================= FORMULARIO ================= */
+  
+  #modalForm input,
+  #modalForm select{
+   width:100%;
+   display:block;
+   margin-bottom:10px;
+  }
+  
+  /* ================= ESCRITORIO ================= */
+  
+  @media(min-width:1024px){
+  
+   #modalForm .modal-content{
+    width:720px;
+   }
+  
+  }
+  
+  /* ================= FOTO GRANDE ================= */
+  
+  .foto-grande{
+   width:100%;
+   max-height:75vh;
+   object-fit:contain;
+   border-radius:16px;
+  }
+  
+  /* ================= MAPA ================= */
+  
+  .map-frame{
+   width:90vw;
+   max-width:1000px;
+   height:70vh;
+   border:0;
+   border-radius:16px;
+  }
+  
+  /* ================= MOBILE ================= */
+  
+  .mobile-list{
+   display:none;
+  }
+  
+  @media(max-width:768px){
+  
+  .table-scroll{
+   display:none;
+  }
+  
+  .mobile-list{
+   display:block;
+  }
+  
+  #kpis{
+   grid-template-columns:repeat(2,1fr);
+  }
+  
+  }
+  
+  </style>
+  
+
+</head>
+
+<body>
+
+<h2>🚚 Tracking de Pedidos</h2>
+
+<div id="kpis"></div>
+
+<div class="filters">
+
+<input id="search" placeholder="Buscar pedido o cliente">
+<input type="date" id="fDesde">
+<input type="date" id="fHasta">
+
+<select id="fStatus">
+<option value="">Todos</option>
+<option>PENDIENTE</option>
+<option>EN RUTA</option>
+<option>RECIBIDO</option>
+<option>ENTREGADO</option>
+<option>CANCELADO</option>
+</select>
+
+<button id="btnNuevo">➕ Nuevo</button> <button id="btnPDF">📄 PDF</button> <button id="btnExcel">📊 Excel</button> <button id="btnReload">🔄 Recargar</button>
+
+</div>
+
+<div class="table-scroll">
+
+<table>
+
+<thead>
+
+<tr>
+<th>Fecha</th>
+<th>Pedido</th>
+<th>Tipo</th>
+<th>N°</th>
+<th>Cliente</th>
+<th>Dirección</th>
+<th>Comuna</th>
+<th>Transporte</th>
+<th>Cajas</th>
+<th>Estado</th>
+<th>Entrega</th>
+<th>Alerta</th>
+<th>Atraso</th>
+<th>Semáforo</th>
+<th>Responsable</th>
+<th>Foto</th>
+<th>PDF</th>
+<th>Traslado</th>
+<th>Acciones</th>
+</tr>
+
+</thead>
+
+<tbody id="tbody"></tbody>
+
+</table>
+
+</div>
+
+<div id="mobileList" class="mobile-list"></div>
+
+<!-- FOTO MODAL -->
+
+<div class="modal" id="fotoModal">
+
+<div class="modal-content">
+
+<img id="fotoGrande" class="foto-grande">
+
+<div style="display:flex;gap:10px;margin-top:15px">
+<button id="btnDescargarFoto">Descargar</button>
+<button id="btnCerrarFoto">Cerrar</button>
+</div>
+
+</div>
+
+</div>
+
+<!-- MAPA MODAL -->
+
+<div class="modal" id="mapModal">
+
+<div class="modal-content">
+
+<iframe id="mapFrame" class="map-frame"></iframe>
+
+<div style="margin-top:15px">
+<button id="btnCerrarMapa">Cerrar</button>
+</div>
+
+</div>
+
+</div>
+
+<!-- FORMULARIO -->
+
+<div class="modal" id="modalForm">
+
+<div class="modal-content">
+
+<h3 id="mtitle">Nuevo Pedido</h3>
+
+<input id="mPedido" placeholder="Pedido">
+
+<select id="mTipoDoc">
+<option>BOLETA</option>
+<option>FACTURA</option>
+<option>GUIA</option>
+<option>ORDEN DE COMPRA</option>
+<option>NOTA DE VENTA</option>
+</select>
+
+<input id="mNumeroDoc" placeholder="Número Documento">
+<input id="mCliente" placeholder="Cliente">
+<input id="mDireccion" placeholder="Dirección">
+<input id="mComuna" placeholder="Comuna">
+<input id="mTransporte" placeholder="Transporte">
+
+<input id="mCajas" type="number" min="1" placeholder="Cajas">
+
+<select id="mStatus">
+<option>PENDIENTE</option>
+<option>EN RUTA</option>
+<option>RECIBIDO</option>
+<option>ENTREGADO</option>
+<option>CANCELADO</option>
+</select>
+
+<input id="mHoraEntrega" type="datetime-local">
+
+<input id="mResponsable" placeholder="Responsable">
+<input id="mObs" placeholder="Observaciones">
+
+<input type="file" id="mFotos" accept="image/*" multiple>
+<input type="file" id="mPdf" accept="application/pdf" multiple>
+
+<div style="display:flex;gap:10px;margin-top:12px">
+<button id="btnGuardar">Guardar</button>
+<button id="btnCancelar">Cancelar</button>
+</div>
+
+</div>
+
+</div>
+
+<script src="envio.js"></script>
+
+</body>
+</html>
