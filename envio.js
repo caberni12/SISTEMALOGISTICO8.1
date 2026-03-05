@@ -55,7 +55,7 @@ let EDIT=null;
 
 let KPI_FILTER="";
 
-/* ================= UTILIDADES ================= */
+/* ================= UTIL ================= */
 
 function setLoading(btn,state){
 
@@ -94,7 +94,6 @@ setLoading(btnReload,true);
 try{
 
 const res=await fetch(API);
-
 RAW=await res.json();
 
 if(!Array.isArray(RAW)) RAW=[];
@@ -159,7 +158,7 @@ fStatus.onchange=applyFilters;
 fDesde.onchange=applyFilters;
 fHasta.onchange=applyFilters;
 
-/* ================= TABLA ================= */
+/* ================= RENDER ================= */
 
 function render(){
 
@@ -172,10 +171,81 @@ return;
 
 }
 
+/* DETECTAR MOVIL */
+
+const mobile=window.innerWidth<768;
+
+/* ================= TARJETAS ================= */
+
+if(mobile){
+
+tbody.innerHTML=`<tr><td colspan="19"><div id="cards"></div></td></tr>`;
+
+const cards=document.getElementById("cards");
+
+FILT.forEach(r=>{
+
+const card=`
+
+<div class="pedido-card">
+
+<div style="display:flex;justify-content:space-between">
+
+<div style="font-size:18px;font-weight:bold">
+Pedido #${r.pedido||""}
+</div>
+
+${renderEstado(r.status)}
+
+</div>
+
+<div><b>Cliente:</b> ${r.cliente||""}</div>
+
+<div><b>Dirección:</b> ${r.direccion||""}</div>
+
+<div><b>Comuna:</b> ${r.comuna||""}</div>
+
+<div><b>Transporte:</b> ${r.transporte||""}</div>
+
+<div><b>Cajas:</b> ${r.etiquetas||""}</div>
+
+<div><b>Ingreso:</b> ${formatDate(r.fechaIngreso)}</div>
+
+<div><b>Entrega:</b> ${r.fechaEntrega||""}</div>
+
+<div><b>Responsable:</b> ${r.responsable||""}</div>
+
+<div style="margin-top:8px">
+
+${r.foto?`<img src="${r.foto}" style="width:70px;border-radius:6px" onclick="verFoto('${r.foto}')">`:""}
+
+</div>
+
+<div style="margin-top:10px">
+
+<button onclick="openModal(${r._row})">✏️</button>
+
+<button onclick="deleteRow(${r._row},this)">🗑️</button>
+
+</div>
+
+</div>
+`;
+
+cards.insertAdjacentHTML("beforeend",card);
+
+});
+
+return;
+
+}
+
+/* ================= TABLA ================= */
+
 FILT.forEach(r=>{
 
 const pdfIcon=r.pdf
-? `<a href="${r.pdf}" target="_blank" title="PDF" style="font-size:18px;text-decoration:none">📄</a>`
+? `<a href="${r.pdf}" target="_blank">📄</a>`
 : "";
 
 const tr=`
@@ -204,7 +274,7 @@ const tr=`
 
 <td>${r.pdfTraslado?`<a href="${r.pdfTraslado}" target="_blank">📄</a>`:""}</td>
 
-<td class="actions">
+<td>
 
 <button onclick="openModal(${r._row})">✏️</button>
 <button onclick="deleteRow(${r._row},this)">🗑️</button>
@@ -220,7 +290,7 @@ tbody.insertAdjacentHTML("beforeend",tr);
 
 }
 
-/* ================= ESTADO COLOR ================= */
+/* ================= ESTADO ================= */
 
 function renderEstado(status){
 
@@ -232,11 +302,11 @@ if(status==="ENTREGADO") color="#22c55e";
 if(status==="RECIBIDO") color="#fb923c";
 if(status==="CANCELADO") color="#3b82f6";
 
-return `<span style="background:#000;color:${color};padding:3px 10px;border-radius:6px">${status}</span>`;
+return `<span style="background:#000;color:${color};padding:4px 10px;border-radius:6px">${status}</span>`;
 
 }
 
-/* ================= KPI ================= */
+/* ================= KPIS ================= */
 
 function renderKPIs(){
 
@@ -249,34 +319,25 @@ const entregado=RAW.filter(x=>x.status==="ENTREGADO").length;
 kpis.innerHTML=`
 
 <div class="kpi" onclick="filterKPI('')">
-<canvas id="k1"></canvas>
 <b>${total}</b>
 <div>Total</div>
 </div>
 
 <div class="kpi" onclick="filterKPI('PENDIENTE')">
-<canvas id="k2"></canvas>
 <b>${pendientes}</b>
 <div>Pendientes</div>
 </div>
 
 <div class="kpi" onclick="filterKPI('EN RUTA')">
-<canvas id="k3"></canvas>
 <b>${ruta}</b>
 <div>En Ruta</div>
 </div>
 
 <div class="kpi" onclick="filterKPI('ENTREGADO')">
-<canvas id="k4"></canvas>
 <b>${entregado}</b>
 <div>Entregados</div>
 </div>
 `;
-
-drawChart("k1",total,total,"#14b8a6");
-drawChart("k2",pendientes,total,"#facc15");
-drawChart("k3",ruta,total,"#ef4444");
-drawChart("k4",entregado,total,"#22c55e");
 
 }
 
@@ -285,26 +346,6 @@ function filterKPI(status){
 KPI_FILTER=status;
 
 applyFilters();
-
-}
-
-function drawChart(id,val,total,color){
-
-if(charts[id]) charts[id].destroy();
-
-charts[id]=new Chart(document.getElementById(id),{
-type:"doughnut",
-data:{
-datasets:[{
-data:[val,total-val],
-backgroundColor:[color,"#e5e7eb"]
-}]
-},
-options:{
-cutout:"70%",
-plugins:{legend:{display:false}}
-}
-});
 
 }
 
@@ -332,22 +373,6 @@ btnNuevo.onclick=()=>{
 
 EDIT=null;
 
-mPedido.value="";
-mTipoDoc.value="BOLETA";
-mNumeroDoc.value="";
-mCliente.value="";
-mDireccion.value="";
-mComuna.value="";
-mTransporte.value="";
-mCajas.value="";
-mStatus.value="PENDIENTE";
-mHoraEntrega.value="";
-mResponsable.value="";
-mObs.value="";
-
-mFotos.value="";
-mPdf.value="";
-
 modalForm.style.display="flex";
 
 };
@@ -355,34 +380,8 @@ modalForm.style.display="flex";
 /* ================= CANCELAR ================= */
 
 btnCancelar.onclick=()=>{
-
 modalForm.style.display="none";
-
 };
-
-/* ================= EDITAR ================= */
-
-function openModal(row){
-
-EDIT=RAW.find(x=>x._row===row);
-
-if(!EDIT) return;
-
-modalForm.style.display="flex";
-
-mPedido.value=EDIT.pedido||"";
-mTipoDoc.value=EDIT.tipoDocumento||"";
-mNumeroDoc.value=EDIT.numeroDocumento||"";
-mCliente.value=EDIT.cliente||"";
-mDireccion.value=EDIT.direccion||"";
-mComuna.value=EDIT.comuna||"";
-mTransporte.value=EDIT.transporte||"";
-mCajas.value=EDIT.etiquetas||"";
-mStatus.value=EDIT.status||"";
-mResponsable.value=EDIT.responsable||"";
-mObs.value=EDIT.observaciones||"";
-
-}
 
 /* ================= GUARDAR ================= */
 
@@ -405,20 +404,13 @@ action:EDIT?"update":"add",
 row:EDIT?EDIT._row:null,
 
 PEDIDO:mPedido.value,
-
-"TIPO DOCUMENTO":mTipoDoc.value,
-"NUMERO DOCUMENTO":mNumeroDoc.value,
-
 CLIENTE:mCliente.value,
 DIRECCION:mDireccion.value,
 COMUNA:mComuna.value,
 TRANSPORTE:mTransporte.value,
 ETIQUETAS:mCajas.value,
-
-OBSERVACIONES:mObs.value,
 STATUS:mStatus.value,
 RESPONSABLE:mResponsable.value,
-
 FOTO:foto,
 PDF:pdf
 
