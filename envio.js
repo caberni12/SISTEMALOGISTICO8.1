@@ -77,25 +77,21 @@ function formatDate(d){
 /* ================= SEMAFORO ================= */
 
 function calcularSemaforo(fechaEntrega){
-
  if(!fechaEntrega) return "";
 
  const hoy=new Date();
  const entrega=new Date(fechaEntrega);
-
  const diff=Math.floor((entrega-hoy)/(1000*60*60*24));
 
  if(diff>1) return `<span class="sem-verde">OK</span>`;
  if(diff===1) return `<span class="sem-amarillo">HOY</span>`;
  if(diff<0) return `<span class="sem-rojo">ATRASO</span>`;
-
  return `<span class="sem-azul">PROX</span>`;
 }
 
 /* ================= ESTADO ================= */
 
 function renderEstado(status){
-
  let color="#fff";
 
  if(status==="PENDIENTE") color="#facc15";
@@ -112,8 +108,10 @@ function renderEstado(status){
 function crearKPI(id,valor,total,color){
 
  const ctx=document.getElementById(id);
-
  if(!ctx) return;
+
+ ctx.style.width="45px";
+ ctx.style.height="45px";
 
  new Chart(ctx,{
   type:"doughnut",
@@ -125,6 +123,7 @@ function crearKPI(id,valor,total,color){
    }]
   },
   options:{
+   responsive:false,
    cutout:"70%",
    plugins:{
     legend:{display:false},
@@ -141,14 +140,10 @@ async function load(){
  setLoading(btnReload,true);
 
  try{
-
   const res=await fetch(API);
   RAW=await res.json();
-
   if(!Array.isArray(RAW)) RAW=[];
-
   applyFilters();
-
  }catch(err){
   console.error(err);
  }
@@ -303,8 +298,16 @@ function renderCards(){
   <div><b>Semáforo:</b> ${semaforo}</div>
   <div><b>Responsable:</b> ${r.responsable||""}</div>
 
-  <div style="margin-top:8px">
-  ${r.foto?`<img src="${r.foto}" class="foto-thumb" onclick="verFoto('${r.foto}')">`:""}
+  <div style="margin-top:10px;display:flex;gap:10px;align-items:center">
+
+  ${r.foto ? `<img src="${r.foto}" class="foto-thumb" onclick="verFoto('${r.foto}')">` : ""}
+
+  ${r.pdf ? `
+  <a href="${r.pdf}" target="_blank">
+  <img src="https://cdn-icons-png.flaticon.com/512/337/337946.png"
+  style="width:30px;height:30px">
+  </a>` : ""}
+
   </div>
 
   <div style="margin-top:10px;display:flex;gap:6px">
@@ -365,11 +368,8 @@ function renderKPIs(){
 /* ================= FOTO ================= */
 
 function verFoto(src){
-
  fotoGrande.src=src;
-
  btnDescargarFoto.onclick=()=>window.open(src);
-
  fotoModal.style.display="flex";
 }
 
@@ -378,9 +378,7 @@ btnCerrarFoto.onclick=()=>fotoModal.style.display="none";
 /* ================= MAPA ================= */
 
 function verMapa(dir){
-
  mapFrame.src="https://maps.google.com/maps?q="+encodeURIComponent(dir)+"&output=embed";
-
  mapModal.style.display="flex";
 }
 
@@ -395,7 +393,6 @@ function openModal(row){
  const data=RAW.find(r=>Number(r._row)===Number(row));
 
  if(data){
-
   mPedido.value=data.pedido||"";
   mTipoDoc.value=data.tipoDocumento||"";
   mNumeroDoc.value=data.numeroDocumento||"";
@@ -468,7 +465,6 @@ btnGuardar.onclick=async()=>{
  });
 
  modalForm.style.display="none";
-
  load();
 };
 
@@ -504,9 +500,7 @@ btnExcel.onclick=()=>{
  const a=document.createElement("a");
 
  a.href=URL.createObjectURL(blob);
-
  a.download="pedidos.csv";
-
  a.click();
 };
 
