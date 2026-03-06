@@ -1,4 +1,4 @@
-const API="https://script.google.com/macros/s/AKfycbzazTrBFiDteGTNfdhoVFK9bVm20KZTGXukHD1aJpz23TDVcfRbz9J5E0LHFlhY4k4fzw/exec";
+const API="https://script.google.com/macros/s/AKfycbyJDdaWOpb5L3znUsbe7PbEMyBMrqhVMm8rALoa9ik1T-iXQTdBh2isNdUKAstz7b2XoQ/exec";
 
 let RAW=[];
 let FILT=[];
@@ -145,22 +145,6 @@ return calcularAlertas(obj);
 
 });
 
-/* SONIDO NUEVO PEDIDO */
-
-const ids=RAW.map(x=>x._row);
-
-if(PREVIOUS_IDS.length){
-
-const nuevos=ids.filter(x=>!PREVIOUS_IDS.includes(x));
-
-if(nuevos.length){
-document.getElementById("alertSound")?.play();
-}
-
-}
-
-PREVIOUS_IDS=ids;
-
 applyFilter();
 
 }catch(e){
@@ -226,17 +210,11 @@ const map={
 "CANCELADO":"#6b7280"
 };
 
-return `<span style="
-background:${map[status]||"#111"};
-color:#fff;
-padding:6px 12px;
-border-radius:20px;
-font-weight:800;
-font-size:12px;">${status}</span>`;
+return `<span style="background:${map[status]||"#111"};color:#fff;padding:6px 12px;border-radius:20px;font-weight:800;font-size:12px;">${status}</span>`;
 
 }
 
-/* ================= GENERAR TRASLADO ================= */
+/* ================= PDF TRASLADO ================= */
 
 function generarTraslado(row){
 
@@ -244,23 +222,44 @@ const r=RAW.find(x=>x._row==row);
 if(!r) return;
 
 const { jsPDF } = window.jspdf;
-
 const doc=new jsPDF();
 
+doc.setFillColor(17,24,39);
+doc.rect(0,0,210,28,"F");
+
+doc.setTextColor(255,255,255);
 doc.setFontSize(18);
-doc.text("DOCUMENTO DE TRASLADO",105,20,null,null,"center");
+doc.text("DOCUMENTO DE TRASLADO",105,18,null,null,"center");
 
-doc.setFontSize(12);
+doc.setTextColor(0,0,0);
 
-doc.rect(15,30,180,90);
+doc.autoTable({
 
-doc.text("Pedido: "+r.pedido,20,45);
-doc.text("Cliente: "+r.cliente,20,55);
-doc.text("Dirección: "+r.direccion,20,65);
-doc.text("Comuna: "+r.comuna,20,75);
-doc.text("Responsable: "+(r.responsable||""),20,85);
-doc.text("Cajas: "+(r.etiquetas||0),20,95);
-doc.text("Fecha Entrega: "+(r.fechaEntrega||""),20,105);
+startY:40,
+
+head:[[
+"Pedido",
+"Cliente",
+"Dirección",
+"Comuna",
+"Cajas",
+"Responsable",
+"Fecha Entrega"
+]],
+
+body:[[
+
+r.pedido,
+r.cliente,
+r.direccion,
+r.comuna,
+r.etiquetas||0,
+r.responsable||"",
+r.fechaEntrega||""
+
+]]
+
+});
 
 doc.save("traslado_"+r.pedido+".pdf");
 
@@ -295,9 +294,7 @@ card.innerHTML=`
 
 <div class="cliente-destacado">${r.cliente}</div>
 
-<div class="estado-wrap">
-${badgeStatus(r.status)}
-</div>
+<div class="estado-wrap">${badgeStatus(r.status)}</div>
 
 <div>📅 Ingreso: ${r.fechaIngreso}</div>
 
@@ -316,15 +313,12 @@ ${fotos.map(f=>`<img src="${f}" onclick="openImageModal('${f}')">`).join("")}
 </div>
 
 <div class="pdf-wrap">
-
 ${pdfs.map(p=>`<a href="${p}" target="_blank">📄 PDF</a>`).join("")}
-
 ${r.pdfTraslado?`<a href="${r.pdfTraslado}" target="_blank" style="background:#dc2626">📦 TRASLADO</a>`:""}
-
 </div>
 
 ${r.status==="ENTREGADO" && !r.pdfTraslado ?
-`<button onclick="generarTraslado(${r._row})" style="background:#111827;margin-top:10px">📦 Generar Traslado</button>`:""}
+`<button onclick="generarTraslado(${r._row})">📦 Generar Traslado</button>`:""}
 
 <button onclick="toggleMap('${mapId}',this)">🗺 Mostrar mapa</button>
 
@@ -332,7 +326,7 @@ ${r.status==="ENTREGADO" && !r.pdfTraslado ?
 <iframe src="https://maps.google.com/maps?q=${encodeURIComponent(r.direccion+" "+r.comuna)}&z=15&output=embed"></iframe>
 </div>
 
-<button onclick="openEdit(${r._row})" style="margin-top:10px">✏️ Editar</button>
+<button onclick="openEdit(${r._row})">✏️ Editar</button>
 
 `;
 
@@ -352,36 +346,23 @@ function openEdit(row){
 
 const r=RAW.find(x=>x._row==row);
 
+if(r.status==="ENTREGADO"){
+
+alert("Pedido entregado. No se puede modificar.");
+return;
+
+}
+
 EDIT_ROW=row;
-
-mFechaIngreso.value=r.fechaIngreso||"";
-mPedido.value=r.pedido||"";
-
-mTipoDocumento.value=r.tipoDocumento||"";
-mNumeroDocumento.value=r.numeroDocumento||"";
 
 mCliente.value=r.cliente||"";
 mDireccion.value=r.direccion||"";
-
 mComuna.value=r.comuna||"";
-mTransporte.value=r.transporte||"";
-
-mCajas.value=r.etiquetas||1;
 mResponsable.value=r.responsable||"";
-
+mCajas.value=r.etiquetas||1;
 mFechaEntrega.value=r.fechaEntrega||"";
-
 mStatus.value=r.status||"";
-
-mStatusEntrega.value=r.statusEntrega||"";
-mSemaforo.value=r.semaforo||"";
-mDiasAtraso.value=r.diasAtraso||0;
-
 mObservaciones.value=r.observaciones||"";
-
-mFoto.value=r.foto||"";
-mPDF.value=r.pdf||"";
-mPDFTraslado.value=r.pdfTraslado||"";
 
 editModal.style.display="flex";
 
@@ -392,6 +373,12 @@ editModal.style.display="flex";
 async function guardar(){
 
 setLoading(btnGuardar,true);
+
+const r=RAW.find(x=>x._row==EDIT_ROW);
+
+if(mStatus.value==="ENTREGADO" && r.status!=="ENTREGADO"){
+generarTraslado(EDIT_ROW);
+}
 
 await fetch(API,{
 method:"POST",
