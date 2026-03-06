@@ -1,6 +1,6 @@
 /* ================= API ================= */
 
-const API="https://script.google.com/macros/s/AKfycbzazTrBFiDteGTNfdhoVFK9bVm20KZTGXukHD1aJpz23TDVcfRbz9J5E0LHFlhY4k4fzw/exec";
+const API="https://script.google.com/macros/s/AKfycbyJDdaWOpb5L3znUsbe7PbEMyBMrqhVMm8rALoa9ik1T-iXQTdBh2isNdUKAstz7b2XoQ/exec";
 
 /* ================= DOM ================= */
 
@@ -73,78 +73,69 @@ function formatDate(d){
 /* ================= SEMAFORO ================= */
 
 function calcularSemaforo(fechaEntrega){
-
  if(!fechaEntrega) return "";
-
  const hoy=new Date();
  const entrega=new Date(fechaEntrega);
-
  const diff=Math.floor((entrega-hoy)/(1000*60*60*24));
 
  if(diff>1) return `<span class="sem-verde">OK</span>`;
  if(diff===1) return `<span class="sem-amarillo">HOY</span>`;
  if(diff<0) return `<span class="sem-rojo">ATRASO</span>`;
-
  return `<span class="sem-azul">PROX</span>`;
 }
 
 /* ================= ESTADO ================= */
 
 function renderEstado(status){
-
  let color="#fff";
-
  if(status==="PENDIENTE") color="#facc15";
  if(status==="EN RUTA") color="#ef4444";
  if(status==="ENTREGADO") color="#22c55e";
  if(status==="RECIBIDO") color="#fb923c";
  if(status==="CANCELADO") color="#3b82f6";
 
- return `<span style="background:#000;color:${color};padding:3px 8px;border-radius:6px">${status}</span>`;
+ return `<span style="background:#000;color:${color};padding:3px 8px;border-radius:6px">${status||""}</span>`;
 }
 
 /* ================= KPI ================= */
 
 function crearKPI(id,valor,total,color){
-
  const ctx=document.getElementById(id);
-
- ctx.style.width="45px";
- ctx.style.height="45px";
+ if(!ctx) return;
+ ctx.width=45; ctx.height=45;
 
  new Chart(ctx,{
- type:"doughnut",
- data:{
- datasets:[{
- data:[valor,total-valor],
- backgroundColor:[color,"#e5e7eb"],
- borderWidth:0
- }]
- },
- options:{
- responsive:false,
- cutout:"70%",
- plugins:{
- legend:{display:false},
- tooltip:{enabled:false}
- }
- }
+  type:"doughnut",
+  data:{
+   datasets:[{
+    data:[valor,total-valor],
+    backgroundColor:[color,"#e5e7eb"],
+    borderWidth:0
+   }]
+  },
+  options:{
+   responsive:false,
+   cutout:"70%",
+   plugins:{
+    legend:{display:false},
+    tooltip:{enabled:false}
+   }
+  }
  });
 }
 
 /* ================= LOAD ================= */
 
 async function load(){
-
- setLoading(btnReload,true);
-
- const res=await fetch(API);
- RAW=await res.json();
-
- if(!Array.isArray(RAW)) RAW=[];
-
- applyFilters();
-
+ try{
+  setLoading(btnReload,true);
+  const res=await fetch(API);
+  RAW=await res.json();
+  if(!Array.isArray(RAW)) RAW=[];
+  applyFilters();
+ }catch(e){
+  alert("Error cargando datos");
+ }
  setLoading(btnReload,false);
 }
 
@@ -156,30 +147,31 @@ function applyFilters(){
 
  FILT=RAW.filter(r=>{
 
- let ok=true;
+  let ok=true;
 
- if(q){
- const txt=(r.cliente||"").toLowerCase()+(r.pedido||"");
- ok=txt.includes(q);
- }
+  if(q){
+   const txt=(r.cliente||"").toLowerCase()+(r.pedido||"");
+   ok=txt.includes(q);
+  }
 
- if(ok && fStatus.value){
- ok=r.status===fStatus.value;
- }
+  if(ok && fStatus.value){
+   ok=r.status===fStatus.value;
+  }
 
- if(ok && fDesde.value){
- ok=new Date(r.fechaIngreso)>=new Date(fDesde.value);
- }
+  if(ok && fDesde.value){
+   ok=new Date(r.fechaIngreso)>=new Date(fDesde.value);
+  }
 
- if(ok && fHasta.value){
- ok=new Date(r.fechaIngreso)<=new Date(fHasta.value);
- }
+  if(ok && fHasta.value){
+   ok=new Date(r.fechaIngreso)<=new Date(fHasta.value);
+  }
 
- return ok;
+  return ok;
 
  });
 
  render();
+
 }
 
 search.oninput=applyFilters;
@@ -202,15 +194,15 @@ function renderTable(){
  tbody.innerHTML="";
 
  if(!FILT.length){
- tbody.innerHTML="<tr><td colspan='19'>Sin datos</td></tr>";
- return;
+  tbody.innerHTML="<tr><td colspan='19'>Sin datos</td></tr>";
+  return;
  }
 
  FILT.forEach(r=>{
 
- const semaforo=calcularSemaforo(r.fechaEntrega);
+  const semaforo=calcularSemaforo(r.fechaEntrega);
 
- const tr=`
+  const tr=`
 
 <tr>
 
@@ -221,7 +213,7 @@ function renderTable(){
 <td>${r.cliente||""}</td>
 
 <td>
-<a href="#" onclick="verMapa('${r.direccion}')">
+<a href="#" onclick="verMapa(\`${r.direccion||""}\`)">
 ${r.direccion||""}
 </a>
 </td>
@@ -264,7 +256,7 @@ ${r.pdfTraslado?`<a href="${r.pdfTraslado}" target="_blank" class="pdf-btn">PDF<
 </tr>
 `;
 
- tbody.insertAdjacentHTML("beforeend",tr);
+  tbody.insertAdjacentHTML("beforeend",tr);
 
  });
 
@@ -278,9 +270,9 @@ function renderCards(){
 
  FILT.forEach(r=>{
 
- const semaforo=calcularSemaforo(r.fechaEntrega);
+  const semaforo=calcularSemaforo(r.fechaEntrega);
 
- const card=`
+  const card=`
 
 <div class="card">
 
@@ -291,7 +283,7 @@ ${renderEstado(r.status)}
 
 <div><b>Cliente:</b> ${r.cliente||""}</div>
 
-<div onclick="verMapa('${r.direccion}')">
+<div onclick="verMapa(\`${r.direccion||""}\`)">
 <b>Dirección:</b> ${r.direccion||""}
 </div>
 
@@ -321,7 +313,7 @@ ${r.pdf?`<a href="${r.pdf}" target="_blank">
 </div>
 `;
 
- mobileList.insertAdjacentHTML("beforeend",card);
+  mobileList.insertAdjacentHTML("beforeend",card);
 
  });
 
@@ -349,16 +341,14 @@ function renderKPIs(){
  crearKPI("k2",pendientes,total,"#facc15");
  crearKPI("k3",ruta,total,"#ef4444");
  crearKPI("k4",entregado,total,"#22c55e");
+
 }
 
 /* ================= FOTO ================= */
 
 function verFoto(src){
-
  fotoGrande.src=src;
-
  btnDescargarFoto.onclick=()=>window.open(src);
-
  fotoModal.style.display="flex";
 }
 
@@ -367,9 +357,7 @@ btnCerrarFoto.onclick=()=>fotoModal.style.display="none";
 /* ================= MAPA ================= */
 
 function verMapa(dir){
-
  mapFrame.src="https://maps.google.com/maps?q="+encodeURIComponent(dir)+"&output=embed";
-
  mapModal.style.display="flex";
 }
 
@@ -382,7 +370,6 @@ function openModal(row){
  EDIT=row;
 
  const data=RAW.find(r=>Number(r._row)===Number(row));
-
  if(!data) return;
 
  mPedido.value=data.pedido||"";
@@ -398,20 +385,18 @@ function openModal(row){
  mObs.value=data.observaciones||"";
 
  if(data.fechaEntrega){
- mHoraEntrega.value=new Date(data.fechaEntrega).toISOString().slice(0,16);
+  mHoraEntrega.value=new Date(data.fechaEntrega).toISOString().slice(0,16);
  }
 
  modalForm.style.display="flex";
+
 }
 
 /* ================= NUEVO ================= */
 
 btnNuevo.onclick=()=>{
-
  EDIT=null;
-
- modalForm.querySelectorAll("input").forEach(i=>i.value="");
-
+ modalForm.querySelectorAll("input,select,textarea").forEach(i=>i.value="");
  modalForm.style.display="flex";
 };
 
@@ -423,30 +408,37 @@ btnCancelar.onclick=()=>modalForm.style.display="none";
 
 btnGuardar.onclick=async()=>{
 
+ setLoading(btnGuardar,true);
+
  const data={
- pedido:mPedido.value,
- tipoDocumento:mTipoDoc.value,
- numeroDocumento:mNumeroDoc.value,
- cliente:mCliente.value,
- direccion:mDireccion.value,
- comuna:mComuna.value,
- transporte:mTransporte.value,
- etiquetas:mCajas.value,
- status:mStatus.value,
- fechaEntrega:mHoraEntrega.value,
- responsable:mResponsable.value,
- observaciones:mObs.value,
- row:EDIT
+
+ action:EDIT?"update":"add",
+
+ row:EDIT,
+
+ "TIPO DOCUMENTO":mTipoDoc.value,
+ "NUMERO DOCUMENTO":mNumeroDoc.value,
+ "CLIENTE":mCliente.value,
+ "DIRECCION":mDireccion.value,
+ "COMUNA":mComuna.value,
+ "TRANSPORTE":mTransporte.value,
+ "ETIQUETAS":mCajas.value,
+ "STATUS":mStatus.value,
+ "FECHA ENTREGA":mHoraEntrega.value,
+ "RESPONSABLE":mResponsable.value,
+ "OBSERVACIONES":mObs.value
+
  };
 
  await fetch(API,{
- method:"POST",
- body:JSON.stringify(data)
+  method:"POST",
+  body:JSON.stringify(data)
  });
 
  modalForm.style.display="none";
-
+ setLoading(btnGuardar,false);
  load();
+
 };
 
 /* ================= ELIMINAR ================= */
@@ -456,40 +448,88 @@ async function deleteRow(row){
  if(!confirm("Eliminar registro?")) return;
 
  await fetch(API,{
- method:"POST",
- body:JSON.stringify({
- action:"delete",
- row:row
- })
+  method:"POST",
+  body:JSON.stringify({
+   action:"delete",
+   row:row
+  })
  });
 
  load();
+
 }
 
-/* ================= EXPORT ================= */
+/* ================= EXPORT XLSX ================= */
 
 btnExcel.onclick=()=>{
 
- let csv="";
+ const data=FILT.map(r=>({
+  Fecha:r.fechaIngreso,
+  Pedido:r.pedido,
+  TipoDocumento:r.tipoDocumento,
+  NumeroDocumento:r.numeroDocumento,
+  Cliente:r.cliente,
+  Direccion:r.direccion,
+  Comuna:r.comuna,
+  Transporte:r.transporte,
+  Cajas:r.etiquetas,
+  Status:r.status,
+  FechaEntrega:r.fechaEntrega,
+  Alerta:r.alerta,
+  DiasAtraso:r.diasAtraso,
+  Responsable:r.responsable
+ }));
 
- FILT.forEach(r=>{
- csv+=Object.values(r).join(",")+"\n";
- });
+ const ws=XLSX.utils.json_to_sheet(data);
+ const wb=XLSX.utils.book_new();
 
- const blob=new Blob([csv]);
+ XLSX.utils.book_append_sheet(wb,ws,"Pedidos");
 
- const a=document.createElement("a");
+ XLSX.writeFile(wb,"pedidos.xlsx");
 
- a.href=URL.createObjectURL(blob);
-
- a.download="pedidos.csv";
-
- a.click();
 };
 
-/* ================= PDF ================= */
+/* ================= EXPORT PDF ================= */
 
-btnPDF.onclick=()=>window.print();
+btnPDF.onclick=()=>{
+
+ const { jsPDF } = window.jspdf;
+ const doc=new jsPDF("l","mm","a4");
+
+ doc.setFontSize(16);
+ doc.text("Reporte de Pedidos",14,15);
+
+ const tableData=FILT.map(r=>[
+  r.pedido,
+  r.cliente,
+  r.direccion,
+  r.comuna,
+  r.transporte,
+  r.status,
+  r.fechaEntrega,
+  r.responsable
+ ]);
+
+ doc.autoTable({
+  head:[[
+   "Pedido",
+   "Cliente",
+   "Dirección",
+   "Comuna",
+   "Transporte",
+   "Estado",
+   "Entrega",
+   "Responsable"
+  ]],
+  body:tableData,
+  startY:25,
+  styles:{fontSize:8},
+  headStyles:{fillColor:[0,0,0]}
+ });
+
+ doc.save("reporte_pedidos.pdf");
+
+};
 
 /* ================= INIT ================= */
 
