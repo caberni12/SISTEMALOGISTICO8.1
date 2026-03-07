@@ -373,13 +373,13 @@ function renderCards(data){
  
     <div style="margin-top:10px;display:flex;gap:6px">
  
-     ${r.status==="ENTREGADO" && !r.pdfTraslado ? 
-       `<button onclick="openTraslado(${r._row})">📦 Generar Traslado</button>` 
-       : ""}
- 
-     ${r.pdfTraslado ? 
-       `<a href="${r.pdfTraslado}" target="_blank">📄 Ver Traslado</a>` 
-       : ""}
+    ${r.status==="ENTREGADO" && !r.pdfTraslado ? 
+  `<button class="btn-traslado" onclick="openTraslado(${r._row})">📦 Generar Traslado</button>` 
+  : ""}
+
+${r.pdfTraslado ? 
+  `<a href="${r.pdfTraslado}" target="_blank" class="btn-traslado-view">📄 Ver Traslado</a>` 
+  : ""}
  
      <button onclick="openModal(${r._row})">Editar</button>
      <button onclick="deleteRow(${r._row})">Eliminar</button>
