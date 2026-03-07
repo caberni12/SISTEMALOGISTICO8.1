@@ -1,7 +1,7 @@
 /***************************************************
 API
 ***************************************************/
-const API="https://script.google.com/macros/s/AKfycbxmmq_MLNAG024dPKPxHE6SSXJrViEL9tjIcjA8G3cSNn9JtYuinetp1yDqZxHmi_SL8Q/exec";
+const API="https://script.google.com/macros/s/AKfycbw9Kq7dLqwvRBbgcptn7BQpWz9p-R0Va0awPCW5Noy0uo0gSvO8-LbMfInwvnC9-NPyvA/exec";
 
 /***************************************************
 DOM
@@ -380,9 +380,6 @@ function renderCards(data){
  
     <div style="margin-top:10px;display:flex;gap:6px">
  
-     ${r.status==="ENTREGADO" && !r.pdfTraslado ? 
-       `<button onclick="openTraslado(${r._row})">📦 Generar Traslado</button>` 
-       : ""}
  
      ${r.pdfTraslado ? 
        `<a href="${r.pdfTraslado}" target="_blank">📄 Ver Traslado</a>` 
