@@ -251,129 +251,149 @@ fHasta.onchange=applyFilters;
 RENDER
 ***************************************************/
 function render(){
- renderTable();
- renderCards();
- renderKPIs();
-}
+
+  TOTAL_PAGES = Math.ceil(FILT.length / PAGE_SIZE);
+ 
+  const start = (PAGE - 1) * PAGE_SIZE;
+  const end = start + PAGE_SIZE;
+ 
+  const data = FILT.slice(start,end);
+ 
+  renderTable(data);
+  renderCards(data);
+  renderKPIs();
+ 
+  renderPagination();
+ 
+ }
 
 /***************************************************
 TABLA
 ***************************************************/
-function renderTable(){
+function renderTable(data){
 
- tbody.innerHTML="";
-
- if(!FILT.length){
-  tbody.innerHTML="<tr><td colspan='19'>Sin datos</td></tr>";
-  return;
+  tbody.innerHTML="";
+ 
+  if(!data.length){
+   tbody.innerHTML="<tr><td colspan='19'>Sin datos</td></tr>";
+   return;
+  }
+ 
+  data.forEach(r=>{
+ 
+  const semaforo=calcularSemaforo(r.fechaEntrega);
+ 
+  const tr=`
+ <tr>
+ <td>${formatDate(r.fechaIngreso)}</td>
+ <td>${r.pedido||""}</td>
+ <td>${r.tipoDocumento||""}</td>
+ <td>${r.numeroDocumento||""}</td>
+ <td>${r.cliente||""}</td>
+ 
+ <td>
+ <a href="#" onclick="verMapa(\`${r.direccion||""}\`)">
+ ${r.direccion||""}
+ </a>
+ </td>
+ 
+ <td>${r.comuna||""}</td>
+ <td>${r.transporte||""}</td>
+ <td>${r.etiquetas||""}</td>
+ 
+ <td>${renderEstado(r.status)}</td>
+ 
+ <td>${r.fechaEntrega||""}</td>
+ 
+ <td>${renderAlerta(r.alerta)}</td>
+ 
+ <td>${r.diasAtraso||""}</td>
+ 
+ <td>${semaforo}</td>
+ 
+ <td>${r.responsable||""}</td>
+ 
+ <td>
+ ${r.foto?`<img src="${r.foto}" class="foto-thumb" onclick="verFoto('${r.foto}')">`:""}
+ </td>
+ 
+ <td>${renderPDF(r.pdf)}</td>
+ 
+ <td>${renderPDF(r.pdfTraslado)}</td>
+ 
+ <td class="actions">
+ <button onclick="openModal(${r._row})">✏️</button>
+ <button onclick="deleteRow(${r._row})">🗑️</button>
+ </td>
+ 
+ </tr>
+ `;
+ 
+  tbody.insertAdjacentHTML("beforeend",tr);
+ 
+  });
+ 
  }
-
- FILT.forEach(r=>{
-
- const semaforo=calcularSemaforo(r.fechaEntrega);
-
- const tr=`
-<tr>
-<td>${formatDate(r.fechaIngreso)}</td>
-<td>${r.pedido||""}</td>
-<td>${r.tipoDocumento||""}</td>
-<td>${r.numeroDocumento||""}</td>
-<td>${r.cliente||""}</td>
-
-<td>
-<a href="#" onclick="verMapa(\`${r.direccion||""}\`)">
-${r.direccion||""}
-</a>
-</td>
-
-<td>${r.comuna||""}</td>
-<td>${r.transporte||""}</td>
-<td>${r.etiquetas||""}</td>
-
-<td>${renderEstado(r.status)}</td>
-
-<td>${r.fechaEntrega||""}</td>
-
-<td>${renderAlerta(r.alerta)}</td>
-
-<td>${r.diasAtraso||""}</td>
-
-<td>${semaforo}</td>
-
-<td>${r.responsable||""}</td>
-
-<td>
-${r.foto?`<img src="${r.foto}" class="foto-thumb" onclick="verFoto('${r.foto}')">`:""}
-</td>
-
-<td>${renderPDF(r.pdf)}</td>
-
-<td>${renderPDF(r.pdfTraslado)}</td>
-
-<td class="actions">
-<button onclick="openModal(${r._row})">✏️</button>
-<button onclick="deleteRow(${r._row})">🗑️</button>
-</td>
-
-</tr>
-`;
-
- tbody.insertAdjacentHTML("beforeend",tr);
-
- });
-
-}
 
 /***************************************************
 CARDS MOBILE
 ***************************************************/
-function renderCards(){
+function renderCards(data){
 
- mobileList.innerHTML="";
-
- FILT.forEach(r=>{
-
- const semaforo=calcularSemaforo(r.fechaEntrega);
-
- const card=`
-<div class="card">
-
-<div class="card-title">
-Pedido #${r.pedido||""}
-${renderEstado(r.status)}
-</div>
-
-<div><b>Cliente:</b> ${r.cliente||""}</div>
-
-<div onclick="verMapa(\`${r.direccion||""}\`)">
-<b>Dirección:</b> ${r.direccion||""}
-</div>
-
-<div><b>Comuna:</b> ${r.comuna||""}</div>
-<div><b>Transporte:</b> ${r.transporte||""}</div>
-<div><b>Cajas:</b> ${r.etiquetas||""}</div>
-
-<div><b>Semáforo:</b> ${semaforo}</div>
-
-<div style="margin-top:10px;display:flex;gap:10px">
-${r.foto?`<img src="${r.foto}" class="foto-thumb" onclick="verFoto('${r.foto}')">`:""}
-${renderPDF(r.pdf)}
-</div>
-
-<div style="margin-top:10px;display:flex;gap:6px">
-<button onclick="openModal(${r._row})">Editar</button>
-<button onclick="deleteRow(${r._row})">Eliminar</button>
-</div>
-
-</div>
-`;
-
- mobileList.insertAdjacentHTML("beforeend",card);
-
- });
-
-}
-
+  mobileList.innerHTML="";
+ 
+  data.forEach(r=>{
+ 
+   const semaforo = calcularSemaforo(r.fechaEntrega);
+ 
+   const card = `
+   <div class="card">
+ 
+    <div class="card-title">
+     Pedido #${r.pedido||""}
+     ${renderEstado(r.status)}
+    </div>
+ 
+    <div><b>Cliente:</b> ${r.cliente||""}</div>
+ 
+    <div onclick="verMapa(\`${r.direccion||""}\`)">
+     <b>Dirección:</b> ${r.direccion||""}
+    </div>
+ 
+    <div><b>Comuna:</b> ${r.comuna||""}</div>
+    <div><b>Transporte:</b> ${r.transporte||""}</div>
+    <div><b>Cajas:</b> ${r.etiquetas||""}</div>
+ 
+    <div><b>Semáforo:</b> ${semaforo}</div>
+ 
+    <div style="margin-top:10px;display:flex;gap:10px">
+     ${r.foto?`<img src="${r.foto}" class="foto-thumb" onclick="verFoto('${r.foto}')">`:""}
+     ${renderPDF(r.pdf)}
+    </div>
+ 
+    <div style="margin-top:10px;display:flex;gap:6px">
+ 
+     ${r.status==="ENTREGADO" && !r.pdfTraslado ? 
+       `<button onclick="openTraslado(${r._row})">📦 Generar Traslado</button>` 
+       : ""}
+ 
+     ${r.pdfTraslado ? 
+       `<a href="${r.pdfTraslado}" target="_blank">📄 Ver Traslado</a>` 
+       : ""}
+ 
+     <button onclick="openModal(${r._row})">Editar</button>
+     <button onclick="deleteRow(${r._row})">Eliminar</button>
+ 
+    </div>
+ 
+   </div>
+   `;
+ 
+   mobileList.insertAdjacentHTML("beforeend",card);
+ 
+  });
+ 
+ }
 /***************************************************
 KPIS
 ***************************************************/
@@ -714,6 +734,45 @@ function exportExcel(btn){
   },300);
 
 }
+
+
+function renderPagination(){
+
+  const pag = document.getElementById("pagination");
+ 
+  if(!pag) return;
+ 
+  pag.innerHTML=`
+ 
+ <button onclick="prevPage()">◀</button>
+ 
+ <span style="padding:0 10px">
+ Página ${PAGE} de ${TOTAL_PAGES}
+ </span>
+ 
+ <button onclick="nextPage()">▶</button>
+ 
+ `;
+ 
+ }
+ 
+ function nextPage(){
+ 
+  if(PAGE < TOTAL_PAGES){
+   PAGE++;
+   render();
+  }
+ 
+ }
+ 
+ function prevPage(){
+ 
+  if(PAGE > 1){
+   PAGE--;
+   render();
+  }
+ 
+ }
 
 /***************************************************
 INIT
