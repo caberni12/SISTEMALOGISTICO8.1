@@ -111,74 +111,78 @@ r.statusEntrega="EN TIEMPO";
 return r;
 }
 /* LOAD */
+/* LOAD */
 
 async function load(){
 
-try{
-
-setLoading(btnReload,true);
-
-const r=await fetch(API);
-const data=await r.json();
-
-RAW=data.map(row=>{
-
-let obj={
-
-_row:row._row,
-fechaIngreso:row.fechaIngreso,
-pedido:row.pedido,
-tipoDocumento:row.tipoDocumento,
-numeroDocumento:row.numeroDocumento,
-cliente:row.cliente,
-direccion:row.direccion,
-comuna:row.comuna,
-transporte:row.transporte,
-etiquetas:row.etiquetas,
-observaciones:row.observaciones,
-status:String(row.status||"").trim().toUpperCase(),
-fechaEntrega:row.fechaEntrega,
-alerta:row.alerta,
-statusEntrega:row.statusEntrega,
-diasAtraso:row.diasAtraso,
-semaforo:row.semaforo,
-responsable:row.responsable,
-foto:row.foto,
-pdf:row.pdf,
-pdfTraslado:row.pdfTraslado,
-solicitudTraslado:row.solicitudTraslado,
-
-_fechaObj:parseFechaSoloDia(row.fechaIngreso)
-
-};
-
-return calcularAlertas(obj);
-
-});
-
-applyFilter();
-
-}catch(e){
-
-console.error("ERROR API",e);
-
-}
-
-setLoading(btnReload,false);
-
-}
-
+    try{
+    
+    setLoading(btnReload,true);
+    
+    const r = await fetch(API);
+    const data = await r.json();
+    
+    RAW = data.map(row=>{
+    
+    let obj={
+    
+    _row:row._row,
+    fechaIngreso:row.fechaIngreso,
+    pedido:row.pedido,
+    tipoDocumento:row.tipoDocumento,
+    numeroDocumento:row.numeroDocumento,
+    cliente:row.cliente,
+    direccion:row.direccion,
+    comuna:row.comuna,
+    transporte:row.transporte,
+    etiquetas:row.etiquetas,
+    observaciones:row.observaciones,
+    status:String(row.status||"").trim().toUpperCase(),
+    fechaEntrega:row.fechaEntrega,
+    alerta:row.alerta,
+    statusEntrega:row.statusEntrega,
+    diasAtraso:row.diasAtraso,
+    semaforo:row.semaforo,
+    responsable:row.responsable,
+    foto:row.foto,
+    pdf:row.pdf,
+    pdfTraslado:row.pdfTraslado,
+    solicitudTraslado:row.solicitudTraslado,
+    
+    _fechaObj:parseFechaSoloDia(row.fechaIngreso)
+    
+    };
+    
+    return calcularAlertas(obj);
+    
+    });
+    
+    /* ORDENAR DEL MAS NUEVO AL MAS ANTIGUO */
+    
+    RAW.sort((a,b)=> b._row - a._row);
+    
+    applyFilter();
+    
+    }catch(e){
+    
+    console.error("ERROR API",e);
+    
+    }
+    
+    setLoading(btnReload,false);
+    
+    }
 /* FILTROS */
 
 function applyFilter(){
 
-    const texto=fBuscar.value.toLowerCase().trim();
-    const status=fStatus.value;
+    const texto = fBuscar.value.toLowerCase().trim();
+    const status = fStatus.value;
     
-    const d1=fDesde.value?new Date(fDesde.value):null;
-    const d2=fHasta.value?new Date(fHasta.value):null;
+    const d1 = fDesde.value ? new Date(fDesde.value) : null;
+    const d2 = fHasta.value ? new Date(fHasta.value) : null;
     
-    FILT=RAW.filter(r=>{
+    FILT = RAW.filter(r=>{
     
     const combo=(r.pedido+" "+r.cliente+" "+r.comuna+" "+r.responsable).toLowerCase();
     
@@ -192,15 +196,15 @@ function applyFilter(){
     
     if(status && status!=="ATRASO" && r.status!==status) return false;
     
-    if(d1||d2){
+    if(d1 || d2){
     
     const fr=r._fechaObj;
     
     if(!fr) return false;
     
-    if(d1 && fr<d1) return false;
+    if(d1 && fr < d1) return false;
     
-    if(d2 && fr>d2) return false;
+    if(d2 && fr > d2) return false;
     
     }
     
@@ -208,12 +212,16 @@ function applyFilter(){
     
     });
     
-    totalPedidos.textContent=FILT.length;
+    /* ORDENAR DEL MAS NUEVO AL MAS ANTIGUO */
     
-    totalCajas.textContent=FILT.reduce((s,r)=>s+Number(r.etiquetas||0),0);
+    FILT.sort((a,b)=> b._row - a._row);
     
-    visibleCount=0;
-    cardsGrid.innerHTML="";
+    totalPedidos.textContent = FILT.length;
+    
+    totalCajas.textContent = FILT.reduce((s,r)=>s+Number(r.etiquetas||0),0);
+    
+    visibleCount = 0;
+    cardsGrid.innerHTML = "";
     
     renderMore();
     

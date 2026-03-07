@@ -58,6 +58,12 @@ let RAW=[];
 let FILT=[];
 let EDIT=null;
 let KPI_CHARTS={};
+/***************************************************
+PAGINACION
+***************************************************/
+let PAGE = 1;
+let PAGE_SIZE = 20;
+let TOTAL_PAGES = 1;
 
 /***************************************************
 UTIL
@@ -180,27 +186,31 @@ LOAD
 ***************************************************/
 async function load(){
 
- try{
-
-  setLoading(btnReload,true);
-
-  const r=await fetch(API);
-
-  RAW=await r.json();
-
-  if(!Array.isArray(RAW)) RAW=[];
-
-  applyFilters();
-
- }catch(e){
-
-  alert("Error cargando datos");
-
+  try{
+ 
+   setLoading(btnReload,true);
+ 
+   const r = await fetch(API);
+ 
+   RAW = await r.json();
+ 
+   if(!Array.isArray(RAW)) RAW=[];
+ 
+   /* ORDENAR DEL MAS NUEVO AL MAS ANTIGUO */
+ 
+   RAW.sort((a,b)=> b._row - a._row);
+ 
+   applyFilters();
+ 
+  }catch(e){
+ 
+   alert("Error cargando datos");
+ 
+  }
+ 
+  setLoading(btnReload,false);
+ 
  }
-
- setLoading(btnReload,false);
-
-}
 
 /***************************************************
 FILTROS
