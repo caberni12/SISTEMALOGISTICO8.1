@@ -382,22 +382,58 @@ tbody tr:hover{
  display:flex;
  justify-content:space-between;
 }
-
-/* ================= MOBILE ================= */
-
 @media(max-width:768px){
+
+body{
+ padding:10px;
+}
+
+/* ocultar tabla */
 
 .table-scroll{
  display:none;
 }
 
+/* mostrar tarjetas */
+
 .mobile-list{
- display:block;
+ display:flex;
+ flex-direction:column;
+ gap:12px;
 }
 
-#kpis{
- grid-template-columns:repeat(2,1fr);
+/* TARJETAS */
+
+.card{
+ width:100%;
+ max-width:100%;
 }
+
+/* KPI EN VERTICAL */
+
+#kpis{
+ display:flex;
+ flex-direction:column;
+ gap:10px;
+}
+
+.kpi{
+ width:100%;
+}
+
+/* filtros más compactos */
+
+.filters{
+ flex-direction:column;
+}
+
+.filters input,
+.filters select,
+.filters button{
+ width:100%;
+}
+
+/* modal más pequeño */
 
 .modal-content{
  width:95%;
@@ -405,6 +441,7 @@ tbody tr:hover{
 }
 
 }
+
 </style>
 
 </head>
