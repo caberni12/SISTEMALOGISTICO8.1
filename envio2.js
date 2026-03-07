@@ -1,4 +1,4 @@
-const API="https://script.google.com/macros/s/AKfycbzlDdhd2WdgS2GqW9r9e4rR8rYoAjFWGTlAetcWHcMf_psMj0614e2pON9QFEN5_T5XDQ/exec";
+const API="https://script.google.com/macros/s/AKfycbwdjqeiIil0UyqftLbcA2G2jOjEp6y9vXJxZGzyvOPjfAWK0JzeNoDuLSekaQ_WLL4cWw/exec";
 
 let RAW=[];
 let FILT=[];
@@ -430,38 +430,43 @@ previewTraslado.onclick=()=>{ if(mPDFTraslado.value) window.open(mPDFTraslado.va
 
 async function guardar(){
 
-setLoading(btnGuardar,true);
-
-await fetch(API,{
-method:"POST",
-body:JSON.stringify({
-
-action:"update",
-row:EDIT_ROW,
-
-FECHAINGRESO:mFechaIngreso.value,
-PEDIDO:mPedido.value,
-TIPODOCUMENTO:mTipoDocumento.value,
-NUMERODOCUMENTO:mNumeroDocumento.value,
-CLIENTE:mCliente.value,
-DIRECCION:mDireccion.value,
-COMUNA:mComuna.value,
-TRANSPORTE:mTransporte.value,
-ETIQUETAS:mCajas.value,
-RESPONSABLE:mResponsable.value,
-STATUS:mStatus.value,
-OBSERVACIONES:mObservaciones.value,
-"FECHA ENTREGA":mFechaEntrega.value
-
-})
-});
-
-closeEdit();
-await load();
-
-setLoading(btnGuardar,false);
-
-}
+    setLoading(btnGuardar,true);
+    
+    /* OBTENER REGISTRO ORIGINAL */
+    
+    const r = RAW.find(x=>x._row==EDIT_ROW);
+    
+    await fetch(API,{
+    method:"POST",
+    body:JSON.stringify({
+    
+    action:"update",
+    row:EDIT_ROW,
+    
+    FECHAINGRESO:r.fechaIngreso,
+    PEDIDO:r.pedido,
+    TIPODOCUMENTO:r.tipoDocumento,
+    NUMERODOCUMENTO:r.numeroDocumento,
+    CLIENTE:r.cliente,
+    DIRECCION:r.direccion,
+    COMUNA:r.comuna,
+    TRANSPORTE:r.transporte,
+    ETIQUETAS:r.etiquetas,
+    RESPONSABLE:r.responsable,
+    
+    STATUS:mStatus.value,
+    OBSERVACIONES:mObservaciones.value,
+    "FECHA ENTREGA":mFechaEntrega.value
+    
+    })
+    });
+    
+    closeEdit();
+    await load();
+    
+    setLoading(btnGuardar,false);
+    
+    }
 
 /* MAPA */
 

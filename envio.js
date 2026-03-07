@@ -1,7 +1,7 @@
 /***************************************************
 API
 ***************************************************/
-const API="https://script.google.com/macros/s/AKfycbzlDdhd2WdgS2GqW9r9e4rR8rYoAjFWGTlAetcWHcMf_psMj0614e2pON9QFEN5_T5XDQ/exec";
+const API="https://script.google.com/macros/s/AKfycbwdjqeiIil0UyqftLbcA2G2jOjEp6y9vXJxZGzyvOPjfAWK0JzeNoDuLSekaQ_WLL4cWw/exec";
 
 /***************************************************
 DOM
@@ -373,13 +373,13 @@ function renderCards(data){
  
     <div style="margin-top:10px;display:flex;gap:6px">
  
-    ${r.status==="ENTREGADO" && !r.pdfTraslado ? 
-  `<button class="btn-traslado" onclick="openTraslado(${r._row})">📦 Generar Traslado</button>` 
-  : ""}
-
-${r.pdfTraslado ? 
-  `<a href="${r.pdfTraslado}" target="_blank" class="btn-traslado-view">📄 Ver Traslado</a>` 
-  : ""}
+     ${r.status==="ENTREGADO" && !r.pdfTraslado ? 
+       `<button onclick="openTraslado(${r._row})">📦 Generar Traslado</button>` 
+       : ""}
+ 
+     ${r.pdfTraslado ? 
+       `<a href="${r.pdfTraslado}" target="_blank">📄 Ver Traslado</a>` 
+       : ""}
  
      <button onclick="openModal(${r._row})">Editar</button>
      <button onclick="deleteRow(${r._row})">Eliminar</button>
