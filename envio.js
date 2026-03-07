@@ -1,9 +1,11 @@
-/* ================= API ================= */
+/***************************************************
+API
+***************************************************/
+const API="https://script.google.com/macros/s/AKfycbzlDdhd2WdgS2GqW9r9e4rR8rYoAjFWGTlAetcWHcMf_psMj0614e2pON9QFEN5_T5XDQ/exec";
 
-const API="https://script.google.com/macros/s/AKfycbyJDdaWOpb5L3znUsbe7PbEMyBMrqhVMm8rALoa9ik1T-iXQTdBh2isNdUKAstz7b2XoQ/exec";
-
-/* ================= DOM ================= */
-
+/***************************************************
+DOM
+***************************************************/
 const tbody=document.getElementById("tbody");
 const mobileList=document.getElementById("mobileList");
 
@@ -35,6 +37,9 @@ const mHoraEntrega=document.getElementById("mHoraEntrega");
 const mResponsable=document.getElementById("mResponsable");
 const mObs=document.getElementById("mObs");
 
+const mFotos=document.getElementById("mFotos");
+const mPdf=document.getElementById("mPdf");
+
 const kpis=document.getElementById("kpis");
 
 const fotoModal=document.getElementById("fotoModal");
@@ -46,23 +51,21 @@ const mapModal=document.getElementById("mapModal");
 const mapFrame=document.getElementById("mapFrame");
 const btnCerrarMapa=document.getElementById("btnCerrarMapa");
 
-/* ================= VARIABLES ================= */
-
+/***************************************************
+VARIABLES
+***************************************************/
 let RAW=[];
 let FILT=[];
 let EDIT=null;
+let KPI_CHARTS={};
 
-/* ================= UTIL ================= */
-
+/***************************************************
+UTIL
+***************************************************/
 function setLoading(btn,state){
  if(!btn) return;
- if(state){
-  btn.classList.add("loading");
-  btn.disabled=true;
- }else{
-  btn.classList.remove("loading");
-  btn.disabled=false;
- }
+ btn.disabled=state;
+ btn.classList.toggle("loading",state);
 }
 
 function formatDate(d){
@@ -70,12 +73,28 @@ function formatDate(d){
  return new Date(d).toLocaleDateString("es-CL");
 }
 
-/* ================= SEMAFORO ================= */
+/***************************************************
+BASE64
+***************************************************/
+function fileToBase64(file){
+ return new Promise((resolve,reject)=>{
+  const reader=new FileReader();
+  reader.onload=()=>resolve(reader.result);
+  reader.onerror=e=>reject(e);
+  reader.readAsDataURL(file);
+ });
+}
 
+/***************************************************
+SEMAFORO
+***************************************************/
 function calcularSemaforo(fechaEntrega){
+
  if(!fechaEntrega) return "";
+
  const hoy=new Date();
  const entrega=new Date(fechaEntrega);
+
  const diff=Math.floor((entrega-hoy)/(1000*60*60*24));
 
  if(diff>1) return `<span class="sem-verde">OK</span>`;
@@ -84,10 +103,36 @@ function calcularSemaforo(fechaEntrega){
  return `<span class="sem-azul">PROX</span>`;
 }
 
-/* ================= ESTADO ================= */
+/***************************************************
+ALERTA
+***************************************************/
+function renderAlerta(alerta){
 
+ if(!alerta) return `<span class="alerta alerta-verde">OK</span>`;
+
+ alerta=alerta.toUpperCase();
+
+ if(alerta.includes("ATRASO")) return `<span class="alerta alerta-rojo">ATRASADO</span>`;
+ if(alerta.includes("48")) return `<span class="alerta alerta-amarillo">POR VENCER</span>`;
+
+ return `<span class="alerta alerta-azul">${alerta}</span>`;
+}
+
+/***************************************************
+PDF ICON
+***************************************************/
+function renderPDF(url){
+ if(!url) return "";
+ return `<a href="${url}" target="_blank" class="icon-pdf">📄</a>`;
+}
+
+/***************************************************
+ESTADO
+***************************************************/
 function renderEstado(status){
+
  let color="#fff";
+
  if(status==="PENDIENTE") color="#facc15";
  if(status==="EN RUTA") color="#ef4444";
  if(status==="ENTREGADO") color="#22c55e";
@@ -97,14 +142,19 @@ function renderEstado(status){
  return `<span style="background:#000;color:${color};padding:3px 8px;border-radius:6px">${status||""}</span>`;
 }
 
-/* ================= KPI ================= */
-
+/***************************************************
+KPI CHART
+***************************************************/
 function crearKPI(id,valor,total,color){
- const ctx=document.getElementById(id);
- if(!ctx) return;
- ctx.width=45; ctx.height=45;
 
- new Chart(ctx,{
+ const canvas=document.getElementById(id);
+ if(!canvas) return;
+
+ const ctx=canvas.getContext("2d");
+
+ if(KPI_CHARTS[id]) KPI_CHARTS[id].destroy();
+
+ KPI_CHARTS[id]=new Chart(ctx,{
   type:"doughnut",
   data:{
    datasets:[{
@@ -114,33 +164,47 @@ function crearKPI(id,valor,total,color){
    }]
   },
   options:{
-   responsive:false,
+   responsive:true,
+   maintainAspectRatio:false,
    cutout:"70%",
    plugins:{
-    legend:{display:false},
-    tooltip:{enabled:false}
+    legend:{display:false}
    }
   }
  });
+
 }
 
-/* ================= LOAD ================= */
-
+/***************************************************
+LOAD
+***************************************************/
 async function load(){
+
  try{
+
   setLoading(btnReload,true);
-  const res=await fetch(API);
-  RAW=await res.json();
+
+  const r=await fetch(API);
+
+  RAW=await r.json();
+
   if(!Array.isArray(RAW)) RAW=[];
+
   applyFilters();
+
  }catch(e){
+
   alert("Error cargando datos");
+
  }
+
  setLoading(btnReload,false);
+
 }
 
-/* ================= FILTROS ================= */
-
+/***************************************************
+FILTROS
+***************************************************/
 function applyFilters(){
 
  const q=(search.value||"").toLowerCase();
@@ -154,17 +218,11 @@ function applyFilters(){
    ok=txt.includes(q);
   }
 
-  if(ok && fStatus.value){
-   ok=r.status===fStatus.value;
-  }
+  if(ok && fStatus.value) ok=r.status===fStatus.value;
 
-  if(ok && fDesde.value){
-   ok=new Date(r.fechaIngreso)>=new Date(fDesde.value);
-  }
+  if(ok && fDesde.value) ok=new Date(r.fechaIngreso)>=new Date(fDesde.value);
 
-  if(ok && fHasta.value){
-   ok=new Date(r.fechaIngreso)<=new Date(fHasta.value);
-  }
+  if(ok && fHasta.value) ok=new Date(r.fechaIngreso)<=new Date(fHasta.value);
 
   return ok;
 
@@ -179,16 +237,18 @@ fStatus.onchange=applyFilters;
 fDesde.onchange=applyFilters;
 fHasta.onchange=applyFilters;
 
-/* ================= RENDER ================= */
-
+/***************************************************
+RENDER
+***************************************************/
 function render(){
  renderTable();
  renderCards();
  renderKPIs();
 }
 
-/* ================= TABLA ================= */
-
+/***************************************************
+TABLA
+***************************************************/
 function renderTable(){
 
  tbody.innerHTML="";
@@ -200,12 +260,10 @@ function renderTable(){
 
  FILT.forEach(r=>{
 
-  const semaforo=calcularSemaforo(r.fechaEntrega);
+ const semaforo=calcularSemaforo(r.fechaEntrega);
 
-  const tr=`
-
+ const tr=`
 <tr>
-
 <td>${formatDate(r.fechaIngreso)}</td>
 <td>${r.pedido||""}</td>
 <td>${r.tipoDocumento||""}</td>
@@ -226,7 +284,7 @@ ${r.direccion||""}
 
 <td>${r.fechaEntrega||""}</td>
 
-<td>${r.alerta||""}</td>
+<td>${renderAlerta(r.alerta)}</td>
 
 <td>${r.diasAtraso||""}</td>
 
@@ -238,42 +296,36 @@ ${r.direccion||""}
 ${r.foto?`<img src="${r.foto}" class="foto-thumb" onclick="verFoto('${r.foto}')">`:""}
 </td>
 
-<td>
-${r.pdf?`<a href="${r.pdf}" target="_blank" class="pdf-btn">PDF</a>`:""}
-</td>
+<td>${renderPDF(r.pdf)}</td>
 
-<td>
-${r.pdfTraslado?`<a href="${r.pdfTraslado}" target="_blank" class="pdf-btn">PDF</a>`:""}
-</td>
+<td>${renderPDF(r.pdfTraslado)}</td>
 
 <td class="actions">
-
 <button onclick="openModal(${r._row})">✏️</button>
 <button onclick="deleteRow(${r._row})">🗑️</button>
-
 </td>
 
 </tr>
 `;
 
-  tbody.insertAdjacentHTML("beforeend",tr);
+ tbody.insertAdjacentHTML("beforeend",tr);
 
  });
 
 }
 
-/* ================= TARJETAS ================= */
-
+/***************************************************
+CARDS MOBILE
+***************************************************/
 function renderCards(){
 
  mobileList.innerHTML="";
 
  FILT.forEach(r=>{
 
-  const semaforo=calcularSemaforo(r.fechaEntrega);
+ const semaforo=calcularSemaforo(r.fechaEntrega);
 
-  const card=`
-
+ const card=`
 <div class="card">
 
 <div class="card-title">
@@ -294,33 +346,27 @@ ${renderEstado(r.status)}
 <div><b>Semáforo:</b> ${semaforo}</div>
 
 <div style="margin-top:10px;display:flex;gap:10px">
-
 ${r.foto?`<img src="${r.foto}" class="foto-thumb" onclick="verFoto('${r.foto}')">`:""}
-
-${r.pdf?`<a href="${r.pdf}" target="_blank">
-<img src="https://cdn-icons-png.flaticon.com/512/337/337946.png" width="30">
-</a>`:""}
-
+${renderPDF(r.pdf)}
 </div>
 
 <div style="margin-top:10px;display:flex;gap:6px">
-
 <button onclick="openModal(${r._row})">Editar</button>
 <button onclick="deleteRow(${r._row})">Eliminar</button>
-
 </div>
 
 </div>
 `;
 
-  mobileList.insertAdjacentHTML("beforeend",card);
+ mobileList.insertAdjacentHTML("beforeend",card);
 
  });
 
 }
 
-/* ================= KPIS ================= */
-
+/***************************************************
+KPIS
+***************************************************/
 function renderKPIs(){
 
  const total=RAW.length;
@@ -330,10 +376,10 @@ function renderKPIs(){
 
  kpis.innerHTML=`
 
-<div class="kpi"><canvas id="k1"></canvas><b>${total}</b><div>Total</div></div>
-<div class="kpi"><canvas id="k2"></canvas><b>${pendientes}</b><div>Pendiente</div></div>
-<div class="kpi"><canvas id="k3"></canvas><b>${ruta}</b><div>En Ruta</div></div>
-<div class="kpi"><canvas id="k4"></canvas><b>${entregado}</b><div>Entregado</div></div>
+<div class="kpi"><div style="height:80px"><canvas id="k1"></canvas></div><b>${total}</b><div>Total</div></div>
+<div class="kpi"><div style="height:80px"><canvas id="k2"></canvas></div><b>${pendientes}</b><div>Pendiente</div></div>
+<div class="kpi"><div style="height:80px"><canvas id="k3"></canvas></div><b>${ruta}</b><div>En Ruta</div></div>
+<div class="kpi"><div style="height:80px"><canvas id="k4"></canvas></div><b>${entregado}</b><div>Entregado</div></div>
 
 `;
 
@@ -344,8 +390,9 @@ function renderKPIs(){
 
 }
 
-/* ================= FOTO ================= */
-
+/***************************************************
+FOTO
+***************************************************/
 function verFoto(src){
  fotoGrande.src=src;
  btnDescargarFoto.onclick=()=>window.open(src);
@@ -354,8 +401,9 @@ function verFoto(src){
 
 btnCerrarFoto.onclick=()=>fotoModal.style.display="none";
 
-/* ================= MAPA ================= */
-
+/***************************************************
+MAPA
+***************************************************/
 function verMapa(dir){
  mapFrame.src="https://maps.google.com/maps?q="+encodeURIComponent(dir)+"&output=embed";
  mapModal.style.display="flex";
@@ -363,8 +411,9 @@ function verMapa(dir){
 
 btnCerrarMapa.onclick=()=>mapModal.style.display="none";
 
-/* ================= MODAL EDITAR ================= */
-
+/***************************************************
+MODAL
+***************************************************/
 function openModal(row){
 
  EDIT=row;
@@ -389,150 +438,276 @@ function openModal(row){
  }
 
  modalForm.style.display="flex";
-
 }
 
-/* ================= NUEVO ================= */
-
+/***************************************************
+NUEVO
+***************************************************/
 btnNuevo.onclick=()=>{
  EDIT=null;
- modalForm.querySelectorAll("input,select,textarea").forEach(i=>i.value="");
+ modalForm.querySelectorAll("input,select").forEach(i=>i.value="");
  modalForm.style.display="flex";
 };
 
-/* ================= CANCELAR ================= */
-
+/***************************************************
+CANCELAR
+***************************************************/
 btnCancelar.onclick=()=>modalForm.style.display="none";
 
-/* ================= GUARDAR ================= */
-
+/***************************************************
+GUARDAR
+***************************************************/
 btnGuardar.onclick=async()=>{
+
+ try{
 
  setLoading(btnGuardar,true);
 
+ let foto="";
+ let pdf="";
+
+ if(mFotos && mFotos.files.length){
+  foto=await fileToBase64(mFotos.files[0]);
+ }
+
+ if(mPdf && mPdf.files.length){
+  pdf=await fileToBase64(mPdf.files[0]);
+ }
+
  const data={
-
- action:EDIT?"update":"add",
-
- row:EDIT,
-
- "TIPO DOCUMENTO":mTipoDoc.value,
- "NUMERO DOCUMENTO":mNumeroDoc.value,
- "CLIENTE":mCliente.value,
- "DIRECCION":mDireccion.value,
- "COMUNA":mComuna.value,
- "TRANSPORTE":mTransporte.value,
- "ETIQUETAS":mCajas.value,
- "STATUS":mStatus.value,
- "FECHA ENTREGA":mHoraEntrega.value,
- "RESPONSABLE":mResponsable.value,
- "OBSERVACIONES":mObs.value
-
+  action:EDIT?"update":"add",
+  row:EDIT,
+  "TIPO DOCUMENTO":mTipoDoc.value,
+  "NUMERO DOCUMENTO":mNumeroDoc.value,
+  "CLIENTE":mCliente.value,
+  "DIRECCION":mDireccion.value,
+  "COMUNA":mComuna.value,
+  "TRANSPORTE":mTransporte.value,
+  "ETIQUETAS":mCajas.value,
+  "STATUS":mStatus.value,
+  "FECHA ENTREGA":mHoraEntrega.value,
+  "RESPONSABLE":mResponsable.value,
+  "OBSERVACIONES":mObs.value,
+  FOTO:foto,
+  PDF:pdf
  };
+
+ const params=new URLSearchParams();
+ params.append("data",JSON.stringify(data));
 
  await fetch(API,{
   method:"POST",
-  body:JSON.stringify(data)
+  body:params
  });
 
  modalForm.style.display="none";
- setLoading(btnGuardar,false);
+
  load();
+
+ }catch(e){
+
+  alert("Error guardando");
+
+ }
+
+ setLoading(btnGuardar,false);
 
 };
 
-/* ================= ELIMINAR ================= */
-
+/***************************************************
+DELETE
+***************************************************/
 async function deleteRow(row){
 
  if(!confirm("Eliminar registro?")) return;
 
+ const params=new URLSearchParams();
+ params.append("data",JSON.stringify({
+  action:"delete",
+  row:row
+ }));
+
  await fetch(API,{
   method:"POST",
-  body:JSON.stringify({
-   action:"delete",
-   row:row
-  })
+  body:params
  });
 
  load();
+}
+
+
+/* ======================================================
+   EXPORTES
+====================================================== */
+
+btnPDF.onclick = ()=> exportPDF(btnPDF);
+btnExcel.onclick = ()=> exportExcel(btnExcel);
+
+
+/* ======================================================
+   EXPORT PDF CON ENCABEZADO
+====================================================== */
+function exportPDF(btn){
+
+  setLoading(btn,true);
+
+  setTimeout(()=>{
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'landscape' });
+
+    const totalPedidos = FILT.length;
+    const totalBultos = FILT.reduce(
+      (sum,r)=> sum + Number(r.etiquetas || 0), 0
+    );
+
+    /* -------- ENCABEZADO -------- */
+
+    doc.setFontSize(18);
+    doc.text("REPORTE LOGÍSTICO DE PEDIDOS",14,15);
+
+    doc.setFontSize(10);
+    doc.text("Sistema Logístico",14,22);
+    doc.text("Fecha de generación: " + new Date().toLocaleString(),14,28);
+
+    doc.setFontSize(11);
+    doc.text(`Total Pedidos: ${totalPedidos}`,250,20);
+    doc.text(`Total Cajas: ${totalBultos}`,250,26);
+
+    /* -------- TABLA -------- */
+
+    doc.autoTable({
+      startY:35,
+
+      head:[[
+
+        'Fecha',
+        'Pedido',
+        'Cliente',
+        'Dirección',
+        'Comuna',
+        'Transporte',
+        'Cajas',
+        'Responsable',
+        'Hora Entrega',
+        'Estado',
+        'Observaciones'
+
+      ]],
+
+      body: FILT.map(r=>[
+
+        r.fechaIngreso || '',
+        r.pedido || '',
+        r.cliente || '',
+        r.direccion || '',
+        r.comuna || '',
+        r.transporte || '',
+        r.etiquetas || 0,
+        r.responsable || '',
+        r.horaEntrega || '',
+        r.status || '',
+        r.observaciones || ''
+
+      ]),
+
+      foot:[[
+
+        '',
+        '',
+        '',
+        '',
+        '',
+        'TOTALES →',
+        `CAJAS: ${totalBultos}`,
+        '',
+        '',
+        `PEDIDOS: ${totalPedidos}`,
+        ''
+
+      ]],
+
+      styles:{
+        fontSize:9
+      },
+
+      headStyles:{
+        fillColor:[20,184,166]
+      }
+
+    });
+
+    doc.save("Reporte_Pedidos_Logisticos.pdf");
+
+    setLoading(btn,false);
+
+  },300);
+}
+
+
+/* ======================================================
+   EXPORT EXCEL CON ENCABEZADO
+====================================================== */
+
+function exportExcel(btn){
+
+  setLoading(btn,true);
+
+  setTimeout(()=>{
+
+    const totalPedidos = FILT.length;
+    const totalBultos = FILT.reduce(
+      (sum,r)=> sum + Number(r.etiquetas || 0),0
+    );
+
+    const data = FILT.map(r=>({
+
+      "Fecha": r.fechaIngreso || '',
+      "Pedido": r.pedido || '',
+      "Cliente": r.cliente || '',
+      "Dirección": r.direccion || '',
+      "Comuna": r.comuna || '',
+      "Transporte": r.transporte || '',
+      "Cajas": r.etiquetas || 0,
+      "Responsable": r.responsable || '',
+      "Hora Entrega": r.horaEntrega || '',
+      "Estado": r.status || '',
+      "Observaciones": r.observaciones || ''
+
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(wb, ws, "Pedidos");
+
+    /* -------- HOJA RESUMEN -------- */
+
+    const resumen = [
+
+      ["REPORTE LOGÍSTICO"],
+      [""],
+      ["Fecha generación", new Date().toLocaleString()],
+      ["Total Pedidos", totalPedidos],
+      ["Total Cajas", totalBultos]
+
+    ];
+
+    const wsResumen = XLSX.utils.aoa_to_sheet(resumen);
+
+    XLSX.utils.book_append_sheet(wb, wsResumen, "Resumen");
+
+    XLSX.writeFile(wb,"Reporte_Pedidos_Logisticos.xlsx");
+
+    setLoading(btn,false);
+
+  },300);
 
 }
 
-/* ================= EXPORT XLSX ================= */
-
-btnExcel.onclick=()=>{
-
- const data=FILT.map(r=>({
-  Fecha:r.fechaIngreso,
-  Pedido:r.pedido,
-  TipoDocumento:r.tipoDocumento,
-  NumeroDocumento:r.numeroDocumento,
-  Cliente:r.cliente,
-  Direccion:r.direccion,
-  Comuna:r.comuna,
-  Transporte:r.transporte,
-  Cajas:r.etiquetas,
-  Status:r.status,
-  FechaEntrega:r.fechaEntrega,
-  Alerta:r.alerta,
-  DiasAtraso:r.diasAtraso,
-  Responsable:r.responsable
- }));
-
- const ws=XLSX.utils.json_to_sheet(data);
- const wb=XLSX.utils.book_new();
-
- XLSX.utils.book_append_sheet(wb,ws,"Pedidos");
-
- XLSX.writeFile(wb,"pedidos.xlsx");
-
-};
-
-/* ================= EXPORT PDF ================= */
-
-btnPDF.onclick=()=>{
-
- const { jsPDF } = window.jspdf;
- const doc=new jsPDF("l","mm","a4");
-
- doc.setFontSize(16);
- doc.text("Reporte de Pedidos",14,15);
-
- const tableData=FILT.map(r=>[
-  r.pedido,
-  r.cliente,
-  r.direccion,
-  r.comuna,
-  r.transporte,
-  r.status,
-  r.fechaEntrega,
-  r.responsable
- ]);
-
- doc.autoTable({
-  head:[[
-   "Pedido",
-   "Cliente",
-   "Dirección",
-   "Comuna",
-   "Transporte",
-   "Estado",
-   "Entrega",
-   "Responsable"
-  ]],
-  body:tableData,
-  startY:25,
-  styles:{fontSize:8},
-  headStyles:{fillColor:[0,0,0]}
- });
-
- doc.save("reporte_pedidos.pdf");
-
-};
-
-/* ================= INIT ================= */
-
+/***************************************************
+INIT
+***************************************************/
 btnReload.onclick=load;
 
 load();

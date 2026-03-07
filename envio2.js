@@ -1,52 +1,81 @@
-const API="https://script.google.com/macros/s/AKfycbyJDdaWOpb5L3znUsbe7PbEMyBMrqhVMm8rALoa9ik1T-iXQTdBh2isNdUKAstz7b2XoQ/exec";
+const API="https://script.google.com/macros/s/AKfycbzlDdhd2WdgS2GqW9r9e4rR8rYoAjFWGTlAetcWHcMf_psMj0614e2pON9QFEN5_T5XDQ/exec";
 
 let RAW=[];
 let FILT=[];
 let visibleCount=0;
 let EDIT_ROW=null;
-let PREVIOUS_IDS=[];
+let TRASLADO_ROW=null;
+
 const CHUNK=20;
 
-/* ================= MODAL IMAGEN ================= */
+/* ELEMENTOS */
 
-let modalOverlay=document.createElement("div");
-modalOverlay.style.position="fixed";
-modalOverlay.style.inset="0";
-modalOverlay.style.background="rgba(0,0,0,.8)";
-modalOverlay.style.display="none";
-modalOverlay.style.alignItems="center";
-modalOverlay.style.justifyContent="center";
-modalOverlay.style.zIndex="99999";
+const cardsGrid=document.getElementById("cardsGrid");
 
-let modalImg=document.createElement("img");
-modalImg.style.maxWidth="95vw";
-modalImg.style.maxHeight="90vh";
-modalImg.style.borderRadius="16px";
+const fBuscar=document.getElementById("fBuscar");
+const fStatus=document.getElementById("fStatus");
+const fDesde=document.getElementById("fDesde");
+const fHasta=document.getElementById("fHasta");
 
-modalOverlay.appendChild(modalImg);
-document.body.appendChild(modalOverlay);
+const totalPedidos=document.getElementById("totalPedidos");
+const totalCajas=document.getElementById("totalCajas");
 
-modalOverlay.onclick=()=>modalOverlay.style.display="none";
+const btnReload=document.getElementById("btnReload");
+const btnGuardar=document.getElementById("btnGuardar");
 
-function openImageModal(url){
-modalImg.src=url;
-modalOverlay.style.display="flex";
+const editModal=document.getElementById("editModal");
+
+/* CAMPOS MODAL */
+
+const mFechaIngreso=document.getElementById("mFechaIngreso");
+const mPedido=document.getElementById("mPedido");
+const mTipoDocumento=document.getElementById("mTipoDocumento");
+const mNumeroDocumento=document.getElementById("mNumeroDocumento");
+const mCliente=document.getElementById("mCliente");
+const mDireccion=document.getElementById("mDireccion");
+const mComuna=document.getElementById("mComuna");
+const mTransporte=document.getElementById("mTransporte");
+const mCajas=document.getElementById("mCajas");
+const mResponsable=document.getElementById("mResponsable");
+const mFechaEntrega=document.getElementById("mFechaEntrega");
+const mStatus=document.getElementById("mStatus");
+const mStatusEntrega=document.getElementById("mStatusEntrega");
+const mSemaforo=document.getElementById("mSemaforo");
+const mDiasAtraso=document.getElementById("mDiasAtraso");
+const mObservaciones=document.getElementById("mObservaciones");
+
+const mFoto=document.getElementById("mFoto");
+const mPDF=document.getElementById("mPDF");
+const mPDFTraslado=document.getElementById("mPDFTraslado");
+
+const boxFoto=document.getElementById("boxFoto");
+const boxPDF=document.getElementById("boxPDF");
+const boxTraslado=document.getElementById("boxTraslado");
+
+const previewFoto=document.getElementById("previewFoto");
+const previewPDF=document.getElementById("previewPDF");
+const previewTraslado=document.getElementById("previewTraslado");
+
+/* LOADER */
+
+function setLoading(btn,state){
+btn.disabled=state;
+btn.classList.toggle("loading",state);
 }
 
-/* ================= FECHA ================= */
+/* FECHA */
 
 function parseFechaSoloDia(str){
-
 if(!str) return null;
-
 const p=str.split("-");
 if(p.length!==3) return null;
-
 return new Date(p[0],p[1]-1,p[2]);
-
 }
 
-/* ================= ALERTAS ================= */
+/* ALERTAS */
+
+
+
 
 function calcularAlertas(r){
 
@@ -59,48 +88,29 @@ const diffHoras=(entrega-ahora)/(1000*60*60);
 const diffDias=Math.floor((ahora-entrega)/(1000*60*60*24));
 
 if(ahora>entrega && r.status!=="ENTREGADO"){
-
 r.alerta="PEDIDO ATRASADO";
 r.semaforo="ROJO";
 r.diasAtraso=Math.max(diffDias,1);
 r.statusEntrega="ATRASADO";
-
 }
 
 else if(diffHoras<=48 && r.status!=="ENTREGADO"){
-
 r.alerta="ENTREGA EN MENOS DE 48H";
 r.semaforo="AMARILLO";
 r.diasAtraso=0;
 r.statusEntrega="POR VENCER";
-
 }
 
 else{
-
 r.alerta="";
 r.semaforo="VERDE";
 r.diasAtraso=0;
 r.statusEntrega="EN TIEMPO";
-
 }
 
 return r;
-
 }
-
-/* ================= LOADER ================= */
-
-function setLoading(btn,state){
-
-if(!btn) return;
-
-btn.disabled=state;
-btn.classList.toggle("loading",state);
-
-}
-
-/* ================= LOAD ================= */
+/* LOAD */
 
 async function load(){
 
@@ -126,7 +136,7 @@ comuna:row.comuna,
 transporte:row.transporte,
 etiquetas:row.etiquetas,
 observaciones:row.observaciones,
-status:row.status,
+status:String(row.status||"").trim().toUpperCase(),
 fechaEntrega:row.fechaEntrega,
 alerta:row.alerta,
 statusEntrega:row.statusEntrega,
@@ -136,6 +146,7 @@ responsable:row.responsable,
 foto:row.foto,
 pdf:row.pdf,
 pdfTraslado:row.pdfTraslado,
+solicitudTraslado:row.solicitudTraslado,
 
 _fechaObj:parseFechaSoloDia(row.fechaIngreso)
 
@@ -157,115 +168,72 @@ setLoading(btnReload,false);
 
 }
 
-/* ================= FILTROS ================= */
+/* FILTROS */
 
 function applyFilter(){
 
-const texto=fBuscar.value.toLowerCase().trim();
-const status=fStatus.value;
+    const texto=fBuscar.value.toLowerCase().trim();
+    const status=fStatus.value;
+    
+    const d1=fDesde.value?new Date(fDesde.value):null;
+    const d2=fHasta.value?new Date(fHasta.value):null;
+    
+    FILT=RAW.filter(r=>{
+    
+    const combo=(r.pedido+" "+r.cliente+" "+r.comuna+" "+r.responsable).toLowerCase();
+    
+    if(texto && !combo.includes(texto)) return false;
+    
+    /* FILTRO ATRASO */
+    
+    if(status==="ATRASO" && r.semaforo!=="ROJO") return false;
+    
+    /* FILTRO NORMAL STATUS */
+    
+    if(status && status!=="ATRASO" && r.status!==status) return false;
+    
+    if(d1||d2){
+    
+    const fr=r._fechaObj;
+    
+    if(!fr) return false;
+    
+    if(d1 && fr<d1) return false;
+    
+    if(d2 && fr>d2) return false;
+    
+    }
+    
+    return true;
+    
+    });
+    
+    totalPedidos.textContent=FILT.length;
+    
+    totalCajas.textContent=FILT.reduce((s,r)=>s+Number(r.etiquetas||0),0);
+    
+    visibleCount=0;
+    cardsGrid.innerHTML="";
+    
+    renderMore();
+    
+    }
 
-const d1=fDesde.value ? new Date(fDesde.value) : null;
-const d2=fHasta.value ? new Date(fHasta.value) : null;
+/* STATUS COLOR */
 
-FILT=RAW.filter(r=>{
+function statusClass(s){
 
-const combo=(r.pedido+" "+r.cliente+" "+r.comuna+" "+r.responsable).toLowerCase();
+if(s==="PENDIENTE") return "estado estado-pendiente";
+if(s==="EN RUTA") return "estado estado-ruta";
+if(s==="RECIBIDO") return "estado estado-recibido";
+if(s==="ENTREGADO") return "estado estado-entregado";
+if(s==="CANCELADO") return "estado estado-cancelado";
 
-if(texto && !combo.includes(texto)) return false;
-if(status && r.status!==status) return false;
-
-if(d1 || d2){
-
-const fr=r._fechaObj;
-if(!fr) return false;
-
-if(d1 && fr<d1) return false;
-if(d2 && fr>d2) return false;
-
-}
-
-return true;
-
-});
-
-totalPedidos.textContent=FILT.length;
-totalCajas.textContent=FILT.reduce((s,r)=>s+Number(r.etiquetas||0),0);
-
-visibleCount=0;
-cardsGrid.innerHTML="";
-
-renderMore();
-
-}
-
-/* ================= STATUS COLORES ================= */
-
-function badgeStatus(status){
-
-const map={
-"PENDIENTE":"#2563eb",
-"EN RUTA":"#dc2626",
-"RECIBIDO":"#7c3aed",
-"ENTREGADO":"#16a34a",
-"CANCELADO":"#6b7280"
-};
-
-return `<span style="background:${map[status]||"#111"};color:#fff;padding:6px 12px;border-radius:20px;font-weight:800;font-size:12px;">${status}</span>`;
-
-}
-
-/* ================= PDF TRASLADO ================= */
-
-function generarTraslado(row){
-
-const r=RAW.find(x=>x._row==row);
-if(!r) return;
-
-const { jsPDF } = window.jspdf;
-const doc=new jsPDF();
-
-doc.setFillColor(17,24,39);
-doc.rect(0,0,210,28,"F");
-
-doc.setTextColor(255,255,255);
-doc.setFontSize(18);
-doc.text("DOCUMENTO DE TRASLADO",105,18,null,null,"center");
-
-doc.setTextColor(0,0,0);
-
-doc.autoTable({
-
-startY:40,
-
-head:[[
-"Pedido",
-"Cliente",
-"Dirección",
-"Comuna",
-"Cajas",
-"Responsable",
-"Fecha Entrega"
-]],
-
-body:[[
-
-r.pedido,
-r.cliente,
-r.direccion,
-r.comuna,
-r.etiquetas||0,
-r.responsable||"",
-r.fechaEntrega||""
-
-]]
-
-});
-
-doc.save("traslado_"+r.pedido+".pdf");
+return "estado";
 
 }
 
-/* ================= TARJETAS ================= */
+/* TARJETAS */
 
 function renderMore(){
 
@@ -277,11 +245,8 @@ slice.forEach(r=>{
 
 let clase="card";
 
-if(r.semaforo==="AMARILLO") clase+=" card-alerta";
 if(r.semaforo==="ROJO") clase+=" card-atraso";
-
-const fotos=(r.foto||"").split("|").filter(u=>u.startsWith("http"));
-const pdfs=(r.pdf||"").split("|").filter(u=>u.startsWith("http"));
+if(r.semaforo==="AMARILLO") clase+=" card-alerta";
 
 const mapId="map_"+r._row;
 
@@ -290,43 +255,66 @@ card.className=clase;
 
 card.innerHTML=`
 
+<div class="card-header">
+
 <div class="pedido-numero">#${r.pedido}</div>
 
-<div class="cliente-destacado">${r.cliente}</div>
+<div class="${statusClass(r.status)}">${r.status}</div>
 
-<div class="estado-wrap">${badgeStatus(r.status)}</div>
-
-<div>📅 Ingreso: ${r.fechaIngreso}</div>
-
-${r.fechaEntrega?`<div>🚚 Entrega: ${r.fechaEntrega}</div>`:""}
-
-<div>📍 ${r.direccion} (${r.comuna})</div>
-
-<div>👨‍💼 ${r.responsable||""}</div>
-
-<div class="cajas-box">CAJAS<span>${r.etiquetas||0}</span></div>
-
-${r.alerta?`<div style="margin-top:6px;font-weight:700;color:#dc2626">${r.alerta}</div>`:""}
-
-<div class="photo-wrap">
-${fotos.map(f=>`<img src="${f}" onclick="openImageModal('${f}')">`).join("")}
 </div>
 
-<div class="pdf-wrap">
-${pdfs.map(p=>`<a href="${p}" target="_blank">📄 PDF</a>`).join("")}
-${r.pdfTraslado?`<a href="${r.pdfTraslado}" target="_blank" style="background:#dc2626">📦 TRASLADO</a>`:""}
+<div class="section">
+<div class="section-title">Cliente</div>
+<div class="section-value">${r.cliente}</div>
 </div>
 
-${r.status==="ENTREGADO" && !r.pdfTraslado ?
-`<button onclick="generarTraslado(${r._row})">📦 Generar Traslado</button>`:""}
+<div class="section">
+<div class="section-title">Dirección</div>
+<div class="section-value">${r.direccion} (${r.comuna})</div>
+</div>
 
-<button onclick="toggleMap('${mapId}',this)">🗺 Mostrar mapa</button>
+<div class="section">
+<div class="section-title">Responsable</div>
+<div class="section-value">${r.responsable||""}</div>
+</div>
+
+<div class="cajas-box">
+CAJAS
+<span>${r.etiquetas||0}</span>
+</div>
+
+${r.solicitudTraslado ? `
+<div class="traslado-ref">
+📦 Traslado: <b>${r.solicitudTraslado}</b>
+</div>
+` : ""}
+
+${r.alerta?`
+    <div style="color:#dc2626;font-weight:800">
+    ${r.alerta}
+    
+    ${r.diasAtraso>0 ? `<br>Días atraso: ${r.diasAtraso}` : ""}
+    
+    </div>
+    `:""}
+
+<div class="card-actions">
+${r.pdfTraslado ? 
+    `<a href="${r.pdfTraslado}" target="_blank" class="btn-pdf">📄 Documento Generado</a>` : ""}
+<button onclick="toggleMap('${mapId}',this)">🗺 Mapa</button>
+
+${r.status==="ENTREGADO" && !r.solicitudTraslado ? 
+`<button onclick="openTraslado(${r._row})">📦 Traslado</button>` : ""}
+
+
+
+<button onclick="openEdit(${r._row})">✏️ Editar</button>
+
+</div>
 
 <div class="map-container" id="${mapId}">
 <iframe src="https://maps.google.com/maps?q=${encodeURIComponent(r.direccion+" "+r.comuna)}&z=15&output=embed"></iframe>
 </div>
-
-<button onclick="openEdit(${r._row})">✏️ Editar</button>
 
 `;
 
@@ -340,45 +328,101 @@ visibleCount+=CHUNK;
 
 }
 
-/* ================= EDITAR ================= */
+/* SCROLL INFINITO */
+
+window.addEventListener("scroll",()=>{
+if(window.innerHeight+window.scrollY>=document.body.offsetHeight-400){
+renderMore();
+}
+});
+
+/* EDITAR */
+
+/* EDITAR */
 
 function openEdit(row){
 
-const r=RAW.find(x=>x._row==row);
+    const r=RAW.find(x=>x._row==row);
+    if(!r) return;
+    
+    if(r.status==="ENTREGADO" || r.status==="CANCELADO"){
+    alert("Este pedido está cerrado y no puede ser editado.");
+    return;
+    }
+    
+    EDIT_ROW=row;
+    
+    /* CARGAR DATOS */
+    
+    mFechaIngreso.value=r.fechaIngreso||"";
+    mPedido.value=r.pedido||"";
+    mTipoDocumento.value=r.tipoDocumento||"";
+    mNumeroDocumento.value=r.numeroDocumento||"";
+    mCliente.value=r.cliente||"";
+    mDireccion.value=r.direccion||"";
+    mComuna.value=r.comuna||"";
+    mTransporte.value=r.transporte||"";
+    mCajas.value=r.etiquetas||1;
+    mResponsable.value=r.responsable||"";
+    mFechaEntrega.value=r.fechaEntrega||"";
+    mStatus.value=r.status||"";
+    
+    mStatusEntrega.value=r.statusEntrega||"";
+    mSemaforo.value=r.semaforo||"";
+    mDiasAtraso.value=r.diasAtraso||0;
+    
+    mObservaciones.value=r.observaciones||"";
+    
+    mFoto.value=r.foto||"";
+    mPDF.value=r.pdf||"";
+    mPDFTraslado.value=r.pdfTraslado||"";
+    
+    /* MOSTRAR DOCUMENTOS */
+    
+    boxFoto.classList.toggle("hidden",!r.foto);
+    boxPDF.classList.toggle("hidden",!r.pdf);
+    boxTraslado.classList.toggle("hidden",!r.pdfTraslado);
+    
+    /* BLOQUEAR CAMPOS */
+    
+    mFechaIngreso.disabled=true;
+    mPedido.disabled=true;
+    mTipoDocumento.disabled=true;
+    mNumeroDocumento.disabled=true;
+    mCliente.disabled=true;
+    mDireccion.disabled=true;
+    mComuna.disabled=true;
+    mTransporte.disabled=true;
+    mCajas.disabled=true;
+    mResponsable.disabled=true;
+    
+    mStatusEntrega.disabled=true;
+    mSemaforo.disabled=true;
+    mDiasAtraso.disabled=true;
+    
+    /* CAMPOS EDITABLES */
+    
+    mObservaciones.disabled=false;
+    mStatus.disabled=false;
+    mFechaEntrega.disabled=false;
+    
+    /* ABRIR MODAL */
+    
+    editModal.style.display="flex";
+    
+    }
 
-if(r.status==="ENTREGADO"){
+/* PREVIEW */
 
-alert("Pedido entregado. No se puede modificar.");
-return;
+previewFoto.onclick=()=>{ if(mFoto.value) window.open(mFoto.value); };
+previewPDF.onclick=()=>{ if(mPDF.value) window.open(mPDF.value); };
+previewTraslado.onclick=()=>{ if(mPDFTraslado.value) window.open(mPDFTraslado.value); };
 
-}
-
-EDIT_ROW=row;
-
-mCliente.value=r.cliente||"";
-mDireccion.value=r.direccion||"";
-mComuna.value=r.comuna||"";
-mResponsable.value=r.responsable||"";
-mCajas.value=r.etiquetas||1;
-mFechaEntrega.value=r.fechaEntrega||"";
-mStatus.value=r.status||"";
-mObservaciones.value=r.observaciones||"";
-
-editModal.style.display="flex";
-
-}
-
-/* ================= GUARDAR ================= */
+/* GUARDAR */
 
 async function guardar(){
 
 setLoading(btnGuardar,true);
-
-const r=RAW.find(x=>x._row==EDIT_ROW);
-
-if(mStatus.value==="ENTREGADO" && r.status!=="ENTREGADO"){
-generarTraslado(EDIT_ROW);
-}
 
 await fetch(API,{
 method:"POST",
@@ -387,13 +431,18 @@ body:JSON.stringify({
 action:"update",
 row:EDIT_ROW,
 
+FECHAINGRESO:mFechaIngreso.value,
+PEDIDO:mPedido.value,
+TIPODOCUMENTO:mTipoDocumento.value,
+NUMERODOCUMENTO:mNumeroDocumento.value,
 CLIENTE:mCliente.value,
 DIRECCION:mDireccion.value,
 COMUNA:mComuna.value,
-RESPONSABLE:mResponsable.value,
+TRANSPORTE:mTransporte.value,
 ETIQUETAS:mCajas.value,
-OBSERVACIONES:mObservaciones.value,
+RESPONSABLE:mResponsable.value,
 STATUS:mStatus.value,
+OBSERVACIONES:mObservaciones.value,
 "FECHA ENTREGA":mFechaEntrega.value
 
 })
@@ -406,41 +455,261 @@ setLoading(btnGuardar,false);
 
 }
 
-function closeEdit(){
-editModal.style.display="none";
-}
-
-/* ================= MAPA ================= */
+/* MAPA */
 
 function toggleMap(id,btn){
 
 const el=document.getElementById(id);
 
-if(!el.style.display || el.style.display==="none"){
-
+if(!el.style.display||el.style.display==="none"){
 el.style.display="block";
 btn.textContent="➖ Ocultar mapa";
-
 }else{
-
 el.style.display="none";
 btn.textContent="🗺 Mostrar mapa";
-
 }
 
 }
 
-/* ================= EVENTOS ================= */
+/* TRASLADO */
+
+/* ================= TRASLADO ================= */
+
+function openTraslado(row){
+
+    /* BUSCAR REGISTRO */
+    
+    const r = RAW.find(x => Number(x._row) === Number(row));
+    if(!r){
+    console.warn("Pedido no encontrado",row);
+    return;
+    }
+    
+    TRASLADO_ROW = row;
+    
+    /* OBTENER MODAL */
+    
+    const modal = document.getElementById("trasladoModal");
+    if(!modal){
+    console.error("No existe el modal trasladoModal");
+    return;
+    }
+    
+    /* ABRIR MODAL */
+    
+    modal.style.display = "flex";
+    
+    /* CARGAR DATOS */
+    
+    const tPedido = document.getElementById("tPedido");
+    const tCliente = document.getElementById("tCliente");
+    const tDireccion = document.getElementById("tDireccion");
+    const tComuna = document.getElementById("tComuna");
+    const tTransporte = document.getElementById("tTransporte");
+    
+    if(tPedido) tPedido.value = r.pedido || "";
+    if(tCliente) tCliente.value = r.cliente || "";
+    if(tDireccion) tDireccion.value = r.direccion || "";
+    if(tComuna) tComuna.value = r.comuna || "";
+    if(tTransporte) tTransporte.value = r.transporte || "";
+    
+    /* LIMPIAR TABLA PRODUCTOS */
+    
+    const tabla = document.getElementById("detalleTable");
+    if(tabla) tabla.innerHTML="";
+    
+    /* CREAR PRIMERA FILA */
+    
+    addProducto();
+    
+    }
+    
+    
+    /* ================= AGREGAR PRODUCTO ================= */
+    
+    function addProducto(){
+    
+    const tabla = document.getElementById("detalleTable");
+    if(!tabla) return;
+    
+    const fila = document.createElement("tr");
+    
+    fila.innerHTML = `
+    <td>
+    <input class="prod" placeholder="Producto">
+    </td>
+    
+    <td>
+    <input class="det" placeholder="Detalle">
+    </td>
+    
+    <td>
+    <input type="number" class="cant" value="1" min="1" oninput="calcTotal()">
+    </td>
+    
+    <td>
+    <button type="button" onclick="this.closest('tr').remove();calcTotal()">✖</button>
+    </td>
+    `;
+    
+    tabla.appendChild(fila);
+    
+    calcTotal();
+    
+    }
+    
+    
+    /* ================= CALCULAR TOTAL ================= */
+    
+    function calcTotal(){
+    
+    let total = 0;
+    
+    document.querySelectorAll(".cant").forEach(input=>{
+    total += Number(input.value || 0);
+    });
+    
+    const campoTotal = document.getElementById("tTotal");
+    
+    if(campoTotal){
+    campoTotal.value = total;
+    }
+    
+    }
+    
+    
+    /* ================= GUARDAR TRASLADO ================= */
+    
+    async function guardarTraslado(){
+
+        const btn=document.getElementById("btnGuardarTraslado");
+        setLoading(btn,true);
+        
+        const r = RAW.find(x => Number(x._row) === Number(TRASLADO_ROW));
+        if(!r){
+        setLoading(btn,false);
+        return;
+        }
+        
+        /* OBTENER PRODUCTOS */
+        
+        const productos=[];
+        
+        document.querySelectorAll("#detalleTable tr").forEach(tr=>{
+        
+        const prod=tr.querySelector(".prod")?.value || "";
+        const det=tr.querySelector(".det")?.value || "";
+        const cant=Number(tr.querySelector(".cant")?.value || 0);
+        
+        if(prod || det || cant){
+        
+        productos.push({
+        producto:prod,
+        detalle:det,
+        cantidad:cant
+        });
+        
+        }
+        
+        });
+        
+        /* VALIDAR PRODUCTOS */
+        
+        if(productos.length===0){
+        alert("Debe agregar al menos un producto");
+        setLoading(btn,false);
+        return;
+        }
+        
+        /* PAYLOAD */
+        
+        const payload={
+        
+        action:"crearTraslado",
+        
+        row:TRASLADO_ROW,
+        
+        pedido:r.pedido,
+        cliente:r.cliente,
+        direccion:r.direccion,
+        comuna:r.comuna,
+        transporte:r.transporte,
+        
+        observaciones:document.getElementById("tObs")?.value || "",
+        total:document.getElementById("tTotal")?.value || 0,
+        
+        productos:productos
+        
+        };
+        
+        try{
+        
+        const resp = await fetch(API,{
+        method:"POST",
+        body:JSON.stringify(payload)
+        });
+        
+        const data = await resp.json();
+        
+        /* ACTUALIZAR OBJETO LOCAL */
+        
+        if(data.traslado){
+        
+        r.solicitudTraslado=data.traslado;
+        r.pdfTraslado=data.pdf;
+        
+        }
+        
+        /* RECARGAR TARJETAS DESDE API */
+        
+        await load();
+        
+        /* ABRIR PDF */
+        
+        if(data.pdf){
+        window.open(data.pdf,"_blank");
+        }
+        
+        alert("Traslado generado: "+data.traslado);
+        
+        closeTraslado();
+        
+        }catch(e){
+        
+        console.error(e);
+        alert("Error generando traslado");
+        
+        }
+        
+        setLoading(btn,false);
+        
+        }
+    /* ================= CERRAR MODAL ================= */
+    
+    function closeTraslado(){
+    
+    const modal = document.getElementById("trasladoModal");
+    if(modal) modal.style.display="none";
+    
+    }
+
+/* MODAL */
+
+function closeEdit(){
+editModal.style.display="none";
+}
+
+/* EVENTOS */
 
 btnReload.onclick=load;
 btnGuardar.onclick=guardar;
 
-fBuscar.oninput=()=>setTimeout(applyFilter,300);
+fBuscar.oninput=applyFilter;
 fStatus.onchange=applyFilter;
 fDesde.onchange=applyFilter;
 fHasta.onchange=applyFilter;
 
-/* ================= REFRESH ================= */
+/* AUTO REFRESH */
 
 setInterval(load,15000);
 

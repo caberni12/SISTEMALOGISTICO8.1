@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-
+<!DOCTYPE html> 
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -7,22 +6,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-
 :root{
 --primary:#14b8a6;
 --primary-dark:#0d9488;
 --danger:#dc2626;
---warning:#facc15;
+--warning:#f59e0b;
+--success:#22c55e;
 --bg:#f8fafc;
 --card:#ffffff;
+--text:#111827;
+--muted:#6b7280;
 --shadow:0 10px 25px rgba(0,0,0,.08);
 }
+
+/* BODY */
 
 body{
 margin:0;
 font-family:Arial, sans-serif;
 background:var(--bg);
 padding:20px;
+color:var(--text);
 }
 
 /* HEADER */
@@ -32,15 +36,15 @@ display:flex;
 justify-content:space-between;
 align-items:center;
 flex-wrap:wrap;
-margin-bottom:20px;
+margin-bottom:25px;
 }
 
 /* BOTONES */
 
 button{
 border:0;
-border-radius:12px;
-padding:8px 14px;
+border-radius:10px;
+padding:10px 16px;
 font-weight:700;
 cursor:pointer;
 background:var(--primary);
@@ -53,11 +57,12 @@ transition:.2s;
 
 button:hover{
 background:var(--primary-dark);
-transform:scale(1.04);
 }
 
 button.loading .btn-text{display:none}
 button.loading .btn-loader{display:inline-block}
+
+/* LOADER */
 
 .btn-loader{
 display:none;
@@ -78,16 +83,31 @@ to{transform:rotate(360deg)}
 .filters{
 display:flex;
 flex-wrap:wrap;
-gap:10px;
-margin-bottom:20px;
+gap:12px;
+margin-bottom:25px;
+}
+
+.filters.hidden{
+display:none;
 }
 
 input,select,textarea{
-padding:9px 12px;
+padding:10px 12px;
 border-radius:10px;
-border:1px solid #e2e8f0;
-width:100%;
+border:1px solid #d1d5db;
 font-size:14px;
+width:100%;
+box-sizing:border-box;
+background:#fff;
+}
+
+/* LABEL */
+
+label{
+display:block;
+font-size:13px;
+font-weight:800;
+margin-bottom:5px;
 }
 
 /* CONTADORES */
@@ -95,17 +115,17 @@ font-size:14px;
 .stats{
 display:flex;
 gap:30px;
-margin-bottom:20px;
+margin-bottom:25px;
 font-weight:bold;
 font-size:18px;
 }
 
-/* TARJETAS */
+/* GRID TARJETAS */
 
 .cards-grid{
 display:grid;
 grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
-gap:20px;
+gap:22px;
 }
 
 /* TARJETA */
@@ -115,142 +135,157 @@ background:var(--card);
 border-radius:18px;
 padding:20px;
 box-shadow:var(--shadow);
-border-left:8px solid #ccc;
-transition:.25s;
+display:flex;
+flex-direction:column;
+gap:12px;
+overflow:hidden;
+transition:.2s;
 }
 
 .card:hover{
-transform:translateY(-4px);
-box-shadow:0 16px 35px rgba(0,0,0,.12);
+transform:translateY(-2px);
+box-shadow:0 14px 30px rgba(0,0,0,.12);
 }
 
-/* ALERTAS */
-
-.card-alerta{
-background:#fef9c3;
-}
+/* ALERTAS TARJETAS */
 
 .card-atraso{
-background:#fee2e2;
-border-left-color:#dc2626;
+border-left:6px solid var(--danger);
+background:#fff1f2;
 }
 
-/* TITULO PEDIDO */
+.card-alerta{
+border-left:6px solid var(--warning);
+background:#fffbeb;
+}
+
+/* HEADER TARJETA */
+
+.card-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+/* NUMERO PEDIDO */
 
 .pedido-numero{
-font-size:32px;
+font-size:30px;
 font-weight:900;
-margin-bottom:6px;
-color:#111827;
 }
 
-.cliente-destacado{
-font-size:22px;
-font-weight:800;
-margin-bottom:10px;
-color:#111827;
-}
+/* ESTADO */
 
-/* BADGES */
-
-.estado-wrap{
-display:flex;
-gap:8px;
-flex-wrap:wrap;
-margin-bottom:10px;
-}
-
-.badge{
+.estado{
 padding:6px 12px;
 border-radius:20px;
-font-weight:700;
 font-size:12px;
+font-weight:800;
 color:#fff;
 }
 
-.badge-PENDIENTE{background:#2563eb}
-.badge-EN_RUTA{background:#dc2626}
-.badge-RECIBIDO{background:#7c3aed}
-.badge-ENTREGADO{background:#16a34a}
-.badge-CANCELADO{background:#6b7280}
+/* SEMAFORO STATUS */
 
-.badge-entrega{background:#16a34a}
-.badge-alerta{background:#f59e0b}
-.badge-atraso{background:#dc2626}
+.estado-pendiente{
+background:#f59e0b;
+}
+
+.estado-ruta{
+background:#3b82f6;
+}
+
+.estado-recibido{
+background:#7c3aed;
+}
+
+.estado-entregado{
+background:#22c55e;
+}
+
+.estado-cancelado{
+background:#ef4444;
+}
+
+/* SECCIONES */
+
+.section{
+display:flex;
+flex-direction:column;
+gap:3px;
+}
+
+.section-title{
+font-size:11px;
+font-weight:800;
+color:var(--muted);
+text-transform:uppercase;
+}
+
+.section-value{
+font-size:15px;
+font-weight:600;
+}
 
 /* CAJAS */
 
 .cajas-box{
-background:#111827;
+background:#0f172a;
 color:#fff;
+border-radius:16px;
+padding:14px;
 text-align:center;
-padding:12px;
-border-radius:14px;
-margin-top:10px;
+margin-top:6px;
 }
 
 .cajas-box span{
-font-size:36px;
+font-size:34px;
 font-weight:900;
 display:block;
 }
 
-/* FOTOS */
-
-.photo-wrap{
-display:flex;
-gap:8px;
-flex-wrap:wrap;
-margin-top:10px;
-}
+/* IMAGEN */
 
 .photo-wrap img{
-width:80px;
-height:80px;
+width:100%;
+max-height:140px;
 object-fit:cover;
 border-radius:10px;
-cursor:pointer;
-transition:.2s;
-}
-
-.photo-wrap img:hover{
-transform:scale(1.15);
 }
 
 /* PDF */
 
-.pdf-wrap{
-margin-top:10px;
-display:flex;
-gap:6px;
-flex-wrap:wrap;
-}
-
 .pdf-wrap a{
-background:#0f172a;
+background:#111827;
 color:#fff;
 padding:6px 10px;
 border-radius:8px;
 font-size:12px;
 text-decoration:none;
-transition:.2s;
+display:inline-block;
+margin-right:6px;
 }
 
-.pdf-wrap a:hover{
-background:#000;
+/* BOTONES TARJETA */
+
+.card-actions{
+display:flex;
+flex-direction:column;
+gap:8px;
+margin-top:8px;
 }
 
 /* MAPA */
 
 .map-container{
 display:none;
-margin-top:10px;
+margin-top:8px;
+border-radius:10px;
+overflow:hidden;
 }
 
 .map-container iframe{
 width:100%;
-height:220px;
-border-radius:12px;
+height:200px;
 border:0;
 }
 
@@ -259,7 +294,7 @@ border:0;
 .modal{
 position:fixed;
 inset:0;
-background:rgba(0,0,0,.7);
+background:rgba(0,0,0,.65);
 display:none;
 align-items:center;
 justify-content:center;
@@ -269,25 +304,223 @@ padding:20px;
 
 .modal-box{
 background:#fff;
-padding:20px;
-border-radius:16px;
-width:900px;
-max-width:95%;
+border-radius:20px;
+padding:30px;
+width:1150px;
+max-width:96%;
 max-height:90vh;
 overflow:auto;
-box-shadow:0 20px 40px rgba(0,0,0,.2);
+box-shadow:0 25px 60px rgba(0,0,0,.25);
+}
+
+.modal-box h3{
+margin:0 0 20px 0;
+font-size:20px;
+font-weight:800;
 }
 
 /* GRID FORM */
 
 .form-grid{
 display:grid;
-grid-template-columns:1fr 1fr;
-gap:12px;
+grid-template-columns:repeat(3,1fr);
+gap:18px 24px;
+align-items:end;
 }
 
 .full{
 grid-column:1 / -1;
+}
+
+/* DOCUMENTOS */
+
+.docs-area{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:20px;
+margin-top:10px;
+}
+
+.doc-item{
+display:flex;
+flex-direction:column;
+align-items:center;
+gap:8px;
+}
+
+.doc-title{
+font-size:12px;
+font-weight:800;
+text-transform:uppercase;
+}
+
+.hidden{
+display:none;
+}
+
+.doc-btn{
+border:0;
+border-radius:14px;
+padding:12px 16px;
+display:flex;
+align-items:center;
+gap:8px;
+cursor:pointer;
+font-weight:700;
+font-size:13px;
+box-shadow:0 6px 15px rgba(0,0,0,.08);
+}
+
+.doc-icon{
+font-size:18px;
+}
+
+.doc-btn.foto{
+background:#e5e7eb;
+color:#111827;
+}
+
+.doc-btn.pdf{
+background:#111827;
+color:#fff;
+}
+
+.doc-btn.traslado{
+background:#dc2626;
+color:#fff;
+}
+
+/* BOTONES MODAL */
+
+.modal-actions{
+display:flex;
+justify-content:flex-end;
+gap:10px;
+margin-top:25px;
+}
+
+.btn-close{
+background:#6b7280;
+}
+
+.btn-close:hover{
+background:#4b5563;
+}
+
+.detalle{
+width:100%;
+border-collapse:collapse;
+margin:10px 0;
+}
+
+.detalle th{
+background:#111;
+color:#fff;
+padding:8px;
+}
+
+.detalle td{
+border:1px solid #ddd;
+padding:6px;
+}
+
+.detalle input{
+width:100%;
+padding:6px;
+}
+
+.btn-traslado{
+background:#dc2626;
+color:#fff;
+border-radius:8px;
+padding:8px 12px;
+}
+
+label{
+display:block;
+font-size:13px;
+font-weight:800;
+margin-top:10px;
+margin-bottom:4px;
+color:#374151;
+}
+
+textarea{
+width:100%;
+min-height:80px;
+padding:10px;
+border-radius:8px;
+border:1px solid #d1d5db;
+}
+
+#tTotal{
+width:100%;
+padding:10px;
+border-radius:8px;
+border:1px solid #d1d5db;
+font-weight:700;
+background:#f9fafb;
+}
+
+
+#trasladoModal label{
+display:block;
+font-size:13px;
+font-weight:700;
+margin-top:10px;
+margin-bottom:4px;
+color:#374151;
+}
+
+#trasladoModal input,
+#trasladoModal textarea{
+width:100%;
+padding:10px;
+border:1px solid #d1d5db;
+border-radius:8px;
+background:#fff;
+}
+
+.btn-pdf{
+background:#111827;
+color:#fff;
+padding:8px 12px;
+border-radius:8px;
+font-size:13px;
+text-decoration:none;
+display:inline-flex;
+align-items:center;
+gap:6px;
+font-weight:700;
+}
+
+.btn-pdf:hover{
+background:#dc2626;
+}
+/* RESPONSIVE */
+
+@media (max-width:1000px){
+
+.form-grid{
+grid-template-columns:repeat(2,1fr);
+}
+
+}
+
+@media (max-width:600px){
+
+.form-grid{
+grid-template-columns:1fr;
+}
+
+.cards-grid{
+grid-template-columns:1fr;
+}
+
+.docs-area{
+grid-template-columns:1fr;
+}
+
 }
 
 </style>
@@ -304,6 +537,8 @@ grid-column:1 / -1;
 
 <button onclick="toggleFullscreen()">Modo TV</button>
 
+<button onclick="toggleFiltros()">Filtros</button>
+
 <button id="btnReload">
 <span class="btn-text">Recargar</span>
 <span class="btn-loader"></span>
@@ -315,7 +550,7 @@ grid-column:1 / -1;
 
 <!-- FILTROS -->
 
-<div class="filters">
+<div class="filters hidden" id="filtersPanel">
 
 <input id="fBuscar" placeholder="Buscar pedido, cliente, comuna">
 
@@ -326,6 +561,7 @@ grid-column:1 / -1;
 <option>RECIBIDO</option>
 <option>ENTREGADO</option>
 <option>CANCELADO</option>
+<option value="ATRASO">CON ATRASO</option>
 </select>
 
 <input type="date" id="fDesde">
@@ -336,23 +572,15 @@ grid-column:1 / -1;
 <!-- CONTADORES -->
 
 <div class="stats">
-
 <div>Pedidos: <span id="totalPedidos">0</span></div>
 <div>Cajas: <span id="totalCajas">0</span></div>
-
 </div>
 
 <!-- TARJETAS -->
 
 <div class="cards-grid" id="cardsGrid"></div>
 
-<!-- MODAL IMAGEN -->
-
-<div class="modal" id="imgModal">
-<img id="imgGrande" style="max-width:90vw;max-height:85vh;border-radius:12px;">
-</div>
-
-<!-- MODAL EDICION -->
+<!-- MODAL -->
 
 <div class="modal" id="editModal">
 
@@ -362,23 +590,63 @@ grid-column:1 / -1;
 
 <div class="form-grid">
 
-<input id="mFechaIngreso" type="date" placeholder="Fecha ingreso">
-<input id="mPedido" placeholder="Pedido">
+<div>
+<label>Fecha Ingreso</label>
+<input id="mFechaIngreso" type="date">
+</div>
 
-<input id="mTipoDocumento" placeholder="Tipo documento">
-<input id="mNumeroDocumento" placeholder="Número documento">
+<div>
+<label>Número Pedido</label>
+<input id="mPedido">
+</div>
 
-<input id="mCliente" placeholder="Cliente">
-<input id="mDireccion" placeholder="Dirección">
+<div>
+<label>Tipo Documento</label>
+<input id="mTipoDocumento">
+</div>
 
-<input id="mComuna" placeholder="Comuna">
-<input id="mTransporte" placeholder="Transporte">
+<div>
+<label>Número Documento</label>
+<input id="mNumeroDocumento">
+</div>
 
-<input id="mCajas" type="number" placeholder="Cajas">
-<input id="mResponsable" placeholder="Responsable">
+<div>
+<label>Cliente</label>
+<input id="mCliente">
+</div>
 
-<input id="mFechaEntrega" type="date" placeholder="Fecha estimada entrega">
+<div>
+<label>Dirección</label>
+<input id="mDireccion">
+</div>
 
+<div>
+<label>Comuna</label>
+<input id="mComuna">
+</div>
+
+<div>
+<label>Transporte</label>
+<input id="mTransporte">
+</div>
+
+<div>
+<label>Cajas</label>
+<input id="mCajas">
+</div>
+
+<div>
+<label>Responsable</label>
+<input id="mResponsable">
+</div>
+
+<div>
+<label>Fecha Probable de Entrega</label>
+<input id="mFechaEntrega" type="date">
+</div>
+
+<div>
+<label>Status Pedido</label>
 <select id="mStatus">
 <option>PENDIENTE</option>
 <option>EN RUTA</option>
@@ -386,37 +654,158 @@ grid-column:1 / -1;
 <option>ENTREGADO</option>
 <option>CANCELADO</option>
 </select>
+</div>
 
-<input id="mStatusEntrega" placeholder="Status entrega">
-<input id="mSemaforo" placeholder="Semáforo">
-<input id="mDiasAtraso" placeholder="Días atraso">
+<div>
+<label>Status Entrega</label>
+<input id="mStatusEntrega">
+</div>
 
-<textarea id="mObservaciones" rows="3" class="full" placeholder="Observaciones"></textarea>
+<div>
+<label>Semáforo</label>
+<input id="mSemaforo">
+</div>
 
-<input id="mFoto" placeholder="URL Foto">
-<input id="mPDF" placeholder="PDF">
-<input id="mPDFTraslado" placeholder="PDF Traslado">
+<div>
+<label>Días Atraso</label>
+<input id="mDiasAtraso">
+</div>
+
+<div class="full">
+<label>Observaciones</label>
+<textarea id="mObservaciones"></textarea>
+</div>
+
+<!-- DOCUMENTOS -->
+
+<div class="full docs-area">
+
+<div class="doc-item hidden" id="boxFoto">
+<div class="doc-title">FOTO</div>
+<button type="button" class="doc-btn foto" id="previewFoto">
+<span class="doc-icon">📷</span>
+<span>Ver Foto</span>
+</button>
+<input type="hidden" id="mFoto">
+</div>
+
+<div class="doc-item hidden" id="boxPDF">
+<div class="doc-title">PDF DOCUMENTO</div>
+<button type="button" class="doc-btn pdf" id="previewPDF">
+<span class="doc-icon">📄</span>
+<span>Abrir PDF</span>
+</button>
+<input type="hidden" id="mPDF">
+</div>
+
+<div class="doc-item hidden" id="boxTraslado">
+<div class="doc-title">PDF TRASLADO</div>
+<button type="button" class="doc-btn traslado" id="previewTraslado">
+<span class="doc-icon">📦</span>
+<span>Traslado</span>
+</button>
+<input type="hidden" id="mPDFTraslado">
+</div>
 
 </div>
 
-<br>
+</div>
+
+<div class="modal-actions">
 
 <button id="btnGuardar">
 <span class="btn-text">Guardar</span>
 <span class="btn-loader"></span>
 </button>
 
-<button onclick="closeEdit()">Cerrar</button>
+<button class="btn-close" onclick="closeEdit()">Cerrar</button>
 
 </div>
 
 </div>
 
-<audio id="alertSound">
-<source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg">
-</audio>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</div>
+
+<div class="modal" id="trasladoModal">
+
+    <div class="modal-box">
+    
+    <h3>Documento de Traslado</h3>
+    
+    <label for="tPedido">Pedido</label>
+    <input id="tPedido" readonly>
+    
+    <label for="tCliente">Cliente</label>
+    <input id="tCliente" readonly>
+    
+    <label for="tDireccion">Dirección</label>
+    <input id="tDireccion" readonly>
+    
+    <label for="tComuna">Comuna</label>
+    <input id="tComuna" readonly>
+    
+    <label for="tTransporte">Transporte</label>
+    <input id="tTransporte" readonly>
+    
+    <table class="detalle">
+    <thead>
+    <tr>
+    <th>Producto</th>
+    <th>Detalle</th>
+    <th>Cantidad</th>
+    <th></th>
+    </tr>
+    </thead>
+    <tbody id="detalleTable"></tbody>
+    </table>
+    
+    <label>Agregar Producto</label>
+    <button onclick="addProducto()">+ Agregar Producto</button>
+    
+    <label for="tObs">Observaciones</label>
+    <textarea id="tObs" placeholder="Observaciones"></textarea>
+    
+    <label for="tTotal">Total</label>
+    <input id="tTotal" placeholder="Total" readonly>
+    
+    <div class="modal-actions">
+    
+        <button id="btnGuardarTraslado" onclick="guardarTraslado()">
+
+            <span class="btn-text">Guardar Traslado</span>
+            <span class="btn-loader"></span>
+            
+            </button>
+    
+    <button onclick="document.getElementById('trasladoModal').style.display='none'">
+    Cerrar
+    </button>
+    
+    </div>
+    
+    </div>
+    </div>
+
+
+<script>
+
+function toggleFullscreen(){
+if(!document.fullscreenElement){
+document.documentElement.requestFullscreen();
+}else{
+document.exitFullscreen();
+}
+}
+
+function toggleFiltros(){
+const panel=document.getElementById("filtersPanel");
+panel.classList.toggle("hidden");
+}
+
+</script>
+
 <script src="envio2.js"></script>
+
 
 </body>
 </html>

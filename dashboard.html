@@ -8,8 +8,13 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<style>
+<!-- ================== LIBRERÍAS ================== -->
+<script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.29/dist/jspdf.plugin.autotable.min.js"></script>
 
+<style>
 /* ================= VARIABLES ================= */
 
 :root{
@@ -20,6 +25,10 @@
  --pri:#14b8a6;
  --pri-dark:#0d9488;
  --border:#cbd5e1;
+ --danger:#dc2626;
+ --warning:#eab308;
+ --success:#16a34a;
+ --info:#2563eb;
 }
 
 /* ================= BASE ================= */
@@ -28,7 +37,7 @@
 
 body{
  margin:0;
- font-family:Inter,Arial;
+ font-family:Inter,Arial,Helvetica,sans-serif;
  background:var(--bg);
  color:var(--txt);
  padding:16px;
@@ -36,28 +45,34 @@ body{
 
 h2{
  margin:0 0 14px 0;
+ font-weight:700;
 }
 
 /* ================= KPI ================= */
 
 #kpis{
  display:grid;
- grid-template-columns:repeat(4,1fr);
+ grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
  gap:12px;
  margin-bottom:16px;
 }
 
 .kpi{
- background:#fff;
- border-radius:12px;
- padding:12px;
- text-align:center;
- box-shadow:0 4px 10px rgba(0,0,0,.08);
+ background:var(--card);
+ padding:14px;
+ border-radius:14px;
+ box-shadow:0 6px 16px rgba(0,0,0,.08);
 }
 
-.kpi b{
- font-size:18px;
- display:block;
+.kpi-title{
+ font-size:12px;
+ color:var(--muted);
+}
+
+.kpi-value{
+ font-size:22px;
+ font-weight:700;
+ margin-top:4px;
 }
 
 /* ================= FILTROS ================= */
@@ -89,10 +104,12 @@ button{
  cursor:pointer;
  position:relative;
  font-size:13px;
+ transition:.2s;
 }
 
 button:hover{
  background:var(--pri-dark);
+ transform:translateY(-1px);
 }
 
 /* ================= LOADER BOTON ================= */
@@ -132,11 +149,13 @@ table{
  width:100%;
  border-collapse:collapse;
  background:var(--card);
- box-shadow:0 8px 24px rgba(0,0,0,.08);
+ box-shadow:0 10px 30px rgba(0,0,0,.08);
+ border-radius:16px;
+ overflow:hidden;
 }
 
 th,td{
- padding:6px 10px;
+ padding:7px 10px;
  border-bottom:1px solid var(--border);
  font-size:13px;
  line-height:1.2;
@@ -149,6 +168,11 @@ th{
  top:0;
  background:#fff;
  font-size:12px;
+ font-weight:600;
+}
+
+tbody tr{
+ transition:.2s;
 }
 
 tbody tr:hover{
@@ -183,12 +207,89 @@ tbody tr:hover{
  cursor:pointer;
 }
 
+/* ================= ICONO PDF ================= */
+
+.icon-pdf{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ width:28px;
+ height:28px;
+ border-radius:6px;
+ background:#dc2626;
+ color:#fff;
+ font-size:14px;
+ text-decoration:none;
+ transition:.2s;
+}
+
+.icon-pdf:hover{
+ background:#b91c1c;
+ transform:scale(1.05);
+}
+
+/* ================= ALERTAS ================= */
+
+.alerta{
+ padding:4px 10px;
+ border-radius:8px;
+ font-size:12px;
+ font-weight:600;
+}
+
+.alerta-verde{
+ background:#dcfce7;
+ color:#166534;
+}
+
+.alerta-amarillo{
+ background:#fef9c3;
+ color:#854d0e;
+}
+
+.alerta-rojo{
+ background:#fee2e2;
+ color:#991b1b;
+}
+
+.alerta-azul{
+ background:#dbeafe;
+ color:#1e40af;
+}
+
 /* ================= SEMAFORO ================= */
 
-.sem-verde{background:#16a34a;color:#fff;padding:3px 8px;border-radius:6px;font-size:11px}
-.sem-amarillo{background:#eab308;color:#fff;padding:3px 8px;border-radius:6px;font-size:11px}
-.sem-rojo{background:#dc2626;color:#fff;padding:3px 8px;border-radius:6px;font-size:11px}
-.sem-azul{background:#2563eb;color:#fff;padding:3px 8px;border-radius:6px;font-size:11px}
+.sem-verde{
+ background:#16a34a;
+ color:#fff;
+ padding:3px 8px;
+ border-radius:6px;
+ font-size:11px
+}
+
+.sem-amarillo{
+ background:#eab308;
+ color:#fff;
+ padding:3px 8px;
+ border-radius:6px;
+ font-size:11px
+}
+
+.sem-rojo{
+ background:#dc2626;
+ color:#fff;
+ padding:3px 8px;
+ border-radius:6px;
+ font-size:11px
+}
+
+.sem-azul{
+ background:#2563eb;
+ color:#fff;
+ padding:3px 8px;
+ border-radius:6px;
+ font-size:11px
+}
 
 /* ================= MODAL ================= */
 
@@ -202,13 +303,17 @@ tbody tr:hover{
  z-index:9999;
 }
 
+/* modal más ancho en escritorio */
+
 .modal-content{
  background:#fff;
- padding:22px;
+ padding:24px;
  border-radius:16px;
- max-width:95%;
+ width:100%;
+ max-width:600px;
  max-height:90vh;
  overflow:auto;
+ box-shadow:0 20px 60px rgba(0,0,0,.25);
 }
 
 /* ================= FORM ================= */
@@ -218,6 +323,22 @@ tbody tr:hover{
  width:100%;
  display:block;
  margin-bottom:10px;
+}
+
+/* layout escritorio */
+
+@media(min-width:900px){
+
+#modalForm .modal-content{
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:12px;
+}
+
+#modalForm h3{
+ grid-column:1/-1;
+}
+
 }
 
 /* ================= FOTO GRANDE ================= */
@@ -266,20 +387,24 @@ tbody tr:hover{
 
 @media(max-width:768px){
 
- .table-scroll{
-  display:none;
- }
-
- .mobile-list{
-  display:block;
- }
-
- #kpis{
-  grid-template-columns:repeat(2,1fr);
- }
-
+.table-scroll{
+ display:none;
 }
 
+.mobile-list{
+ display:block;
+}
+
+#kpis{
+ grid-template-columns:repeat(2,1fr);
+}
+
+.modal-content{
+ width:95%;
+ max-width:95%;
+}
+
+}
 </style>
 
 </head>
@@ -388,52 +513,74 @@ tbody tr:hover{
 
 <div class="modal" id="modalForm">
 
-<div class="modal-content">
-
-<h3 id="mtitle">Pedido</h3>
-
-<input id="mPedido" placeholder="Pedido">
-
-<select id="mTipoDoc">
-<option>BOLETA</option>
-<option>FACTURA</option>
-<option>GUIA</option>
-<option>ORDEN DE COMPRA</option>
-<option>NOTA DE VENTA</option>
-</select>
-
-<input id="mNumeroDoc" placeholder="Número Documento">
-<input id="mCliente" placeholder="Cliente">
-<input id="mDireccion" placeholder="Dirección">
-<input id="mComuna" placeholder="Comuna">
-<input id="mTransporte" placeholder="Transporte">
-
-<input id="mCajas" type="number" min="1" placeholder="Cajas">
-
-<select id="mStatus">
-<option>PENDIENTE</option>
-<option>EN RUTA</option>
-<option>RECIBIDO</option>
-<option>ENTREGADO</option>
-<option>CANCELADO</option>
-</select>
-
-<input id="mHoraEntrega" type="datetime-local">
-
-<input id="mResponsable" placeholder="Responsable">
-<input id="mObs" placeholder="Observaciones">
-
-<input type="file" id="mFotos" accept="image/*" multiple>
-<input type="file" id="mPdf" accept="application/pdf" multiple>
-
-<div style="display:flex;gap:10px;margin-top:12px">
-<button id="btnGuardar">Guardar</button>
-<button id="btnCancelar">Cancelar</button>
-</div>
-
-</div>
-
-</div>
+    <div class="modal-content">
+    
+    <h3 id="mtitle">Editar Pedido</h3>
+    
+    <label>Pedido</label>
+    <input id="mPedido" placeholder="Número de pedido">
+    
+    <label>Tipo Documento</label>
+    <select id="mTipoDoc">
+    <option>BOLETA</option>
+    <option>FACTURA</option>
+    <option>GUIA</option>
+    <option>ORDEN DE COMPRA</option>
+    <option>NOTA DE VENTA</option>
+    </select>
+    
+    <label>Número Documento</label>
+    <input id="mNumeroDoc" placeholder="Número documento">
+    
+    <label>Cliente</label>
+    <input id="mCliente" placeholder="Nombre del cliente">
+    
+    <label>Dirección</label>
+    <input id="mDireccion" placeholder="Dirección entrega">
+    
+    <label>Comuna</label>
+    <input id="mComuna" placeholder="Comuna">
+    
+    <label>Transporte</label>
+    <input id="mTransporte" placeholder="Empresa transporte">
+    
+    <label>Cantidad de Cajas</label>
+    <input id="mCajas" type="number" min="1">
+    
+    <label>Estado del Pedido</label>
+    <select id="mStatus">
+    <option>PENDIENTE</option>
+    <option>EN RUTA</option>
+    <option>RECIBIDO</option>
+    <option>ENTREGADO</option>
+    <option>CANCELADO</option>
+    </select>
+    
+    <label>Fecha / Hora Entrega</label>
+    <input id="mHoraEntrega" type="datetime-local">
+    
+    <label>Responsable</label>
+    <input id="mResponsable" placeholder="Responsable entrega">
+    
+    <label>Observaciones</label>
+    <input id="mObs" placeholder="Observaciones del pedido">
+    
+    <label>Subir Fotos</label>
+    <input type="file" id="mFotos" accept="image/*" multiple>
+    
+    <label>Subir PDF</label>
+    <input type="file" id="mPdf" accept="application/pdf" multiple>
+    
+    <div style="display:flex;gap:10px;margin-top:14px">
+    
+    <button id="btnGuardar">Guardar</button>
+    <button id="btnCancelar">Cancelar</button>
+    
+    </div>
+    
+    </div>
+    
+    </div>
 
 <script src="envio.js"></script>
 
