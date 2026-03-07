@@ -722,6 +722,13 @@ fStatus.onchange=applyFilter;
 fDesde.onchange=applyFilter;
 fHasta.onchange=applyFilter;
 
+
+
+
+
+
+
+
 /* AUTO REFRESH */
 
 setInterval(load,15000);

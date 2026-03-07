@@ -217,35 +217,42 @@ FILTROS
 ***************************************************/
 function applyFilters(){
 
- const q=(search.value||"").toLowerCase();
-
- FILT=RAW.filter(r=>{
-
-  let ok=true;
-
-  if(q){
-   const txt=(r.cliente||"").toLowerCase()+(r.pedido||"");
-   ok=txt.includes(q);
-  }
-
-  if(ok && fStatus.value) ok=r.status===fStatus.value;
-
-  if(ok && fDesde.value) ok=new Date(r.fechaIngreso)>=new Date(fDesde.value);
-
-  if(ok && fHasta.value) ok=new Date(r.fechaIngreso)<=new Date(fHasta.value);
-
-  return ok;
-
- });
-
- render();
-
-}
-
-search.oninput=applyFilters;
-fStatus.onchange=applyFilters;
-fDesde.onchange=applyFilters;
-fHasta.onchange=applyFilters;
+  const q=(search.value||"").toLowerCase();
+ 
+  FILT=RAW.filter(r=>{
+ 
+   let ok=true;
+ 
+   if(q){
+ 
+    const txt = (
+      (r.cliente || "") +
+      (r.pedido || "") +
+      (r.numeroDocumento || "")
+    ).toLowerCase();
+ 
+    ok = txt.includes(q);
+ 
+   }
+ 
+   if(ok && fStatus.value) ok = r.status === fStatus.value;
+ 
+   if(ok && fDesde.value) ok = new Date(r.fechaIngreso) >= new Date(fDesde.value);
+ 
+   if(ok && fHasta.value) ok = new Date(r.fechaIngreso) <= new Date(fHasta.value);
+ 
+   return ok;
+ 
+  });
+ 
+  render();
+ 
+ }
+ 
+ search.oninput=applyFilters;
+ fStatus.onchange=applyFilters;
+ fDesde.onchange=applyFilters;
+ fHasta.onchange=applyFilters;
 
 /***************************************************
 RENDER
@@ -446,38 +453,107 @@ MODAL
 ***************************************************/
 function openModal(row){
 
- EDIT=row;
-
- const data=RAW.find(r=>Number(r._row)===Number(row));
- if(!data) return;
-
- mPedido.value=data.pedido||"";
- mTipoDoc.value=data.tipoDocumento||"";
- mNumeroDoc.value=data.numeroDocumento||"";
- mCliente.value=data.cliente||"";
- mDireccion.value=data.direccion||"";
- mComuna.value=data.comuna||"";
- mTransporte.value=data.transporte||"";
- mCajas.value=data.etiquetas||"";
- mStatus.value=data.status||"PENDIENTE";
- mResponsable.value=data.responsable||"";
- mObs.value=data.observaciones||"";
-
- if(data.fechaEntrega){
-  mHoraEntrega.value=new Date(data.fechaEntrega).toISOString().slice(0,16);
+  EDIT=row;
+ 
+  const data=RAW.find(r=>Number(r._row)===Number(row));
+  if(!data) return;
+ 
+  mPedido.value=data.pedido||"";
+  mTipoDoc.value=data.tipoDocumento||"";
+  mNumeroDoc.value=data.numeroDocumento||"";
+  mCliente.value=data.cliente||"";
+  mDireccion.value=data.direccion||"";
+  mComuna.value=data.comuna||"";
+  mTransporte.value=data.transporte||"";
+  mCajas.value=data.etiquetas||"";
+  mStatus.value=data.status||"PENDIENTE";
+  mResponsable.value=data.responsable||"";
+  mObs.value=data.observaciones||"";
+ 
+  if(data.fechaEntrega){
+   mHoraEntrega.value=new Date(data.fechaEntrega).toISOString().slice(0,16);
+  }
+ 
+  /* ===== FOTO EXISTENTE ===== */
+ 
+  const fotoPreview=document.getElementById("fotoPreview");
+ 
+  if(fotoPreview){
+ 
+   if(data.foto){
+    fotoPreview.innerHTML=`
+    <div class="preview-box">
+    <a href="${data.foto}" target="_blank">
+    <img src="${data.foto}">
+    </a>
+    <div class="preview-label">Imagen actual</div>
+    </div>
+    `;
+   }else{
+    fotoPreview.innerHTML="";
+   }
+ 
+  }
+ 
+  /* ===== PDF EXISTENTE ===== */
+ 
+  const pdfPreview=document.getElementById("pdfPreview");
+ 
+  if(pdfPreview){
+ 
+   if(data.pdf){
+    pdfPreview.innerHTML=`
+    <div class="preview-box">
+    <a href="${data.pdf}" target="_blank">
+    📄 Ver documento actual
+    </a>
+    </div>
+    `;
+   }else{
+    pdfPreview.innerHTML="";
+   }
+ 
+  }
+ 
+  modalForm.style.display="flex";
+ 
  }
-
- modalForm.style.display="flex";
-}
 
 /***************************************************
 NUEVO
 ***************************************************/
-btnNuevo.onclick=()=>{
- EDIT=null;
- modalForm.querySelectorAll("input,select").forEach(i=>i.value="");
- modalForm.style.display="flex";
-};
+btnNuevo.onclick = () => {
+
+  EDIT = null;
+ 
+  /* LIMPIAR TODOS LOS CAMPOS */
+ 
+  modalForm.querySelectorAll("input,select,textarea").forEach(el => {
+   el.value = "";
+  });
+ 
+  /* LIMPIAR INPUT FILE */
+ 
+  if (mFotos) mFotos.value = "";
+  if (mPdf) mPdf.value = "";
+ 
+  /* LIMPIAR VISTAS PREVIAS */
+ 
+  const fotoPreview = document.getElementById("fotoPreview");
+  const pdfPreview = document.getElementById("pdfPreview");
+ 
+  if (fotoPreview) fotoPreview.innerHTML = "";
+  if (pdfPreview) pdfPreview.innerHTML = "";
+ 
+  /* VALOR POR DEFECTO */
+ 
+  if (mStatus) mStatus.value = "PENDIENTE";
+ 
+  /* ABRIR MODAL */
+ 
+  modalForm.style.display = "flex";
+ 
+ };
 
 /***************************************************
 CANCELAR
@@ -773,6 +849,28 @@ function renderPagination(){
   }
  
  }
+
+
+ /* ===============================
+   OCULTAR / MOSTRAR DASHBOARD
+================================ */
+
+const btnTogglePanel = document.getElementById("btnTogglePanel");
+const panelDashboard = document.getElementById("panelDashboard");
+
+if(btnTogglePanel && panelDashboard){
+
+btnTogglePanel.onclick = () => {
+
+const hidden = panelDashboard.classList.toggle("panel-hidden");
+
+btnTogglePanel.textContent = hidden
+? "📊 Mostrar Panel"
+: "📊 Ocultar Panel";
+
+};
+
+}
 
 /***************************************************
 INIT

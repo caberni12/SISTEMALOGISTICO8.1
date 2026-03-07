@@ -90,6 +90,7 @@ input,select{
  border:1px solid var(--border);
  font-size:13px;
  background:#fff;
+ width:100%;
 }
 
 /* ================= BOTONES ================= */
@@ -171,10 +172,6 @@ th{
  font-weight:600;
 }
 
-tbody tr{
- transition:.2s;
-}
-
 tbody tr:hover{
  background:#f1f5f9;
 }
@@ -237,59 +234,27 @@ tbody tr:hover{
  font-weight:600;
 }
 
-.alerta-verde{
- background:#dcfce7;
- color:#166534;
-}
-
-.alerta-amarillo{
- background:#fef9c3;
- color:#854d0e;
-}
-
-.alerta-rojo{
- background:#fee2e2;
- color:#991b1b;
-}
-
-.alerta-azul{
- background:#dbeafe;
- color:#1e40af;
-}
+.alerta-verde{background:#dcfce7;color:#166534;}
+.alerta-amarillo{background:#fef9c3;color:#854d0e;}
+.alerta-rojo{background:#fee2e2;color:#991b1b;}
+.alerta-azul{background:#dbeafe;color:#1e40af;}
 
 /* ================= SEMAFORO ================= */
 
-.sem-verde{
- background:#16a34a;
- color:#fff;
- padding:3px 8px;
- border-radius:6px;
- font-size:11px
-}
-
-.sem-amarillo{
- background:#eab308;
- color:#fff;
- padding:3px 8px;
- border-radius:6px;
- font-size:11px
-}
-
-.sem-rojo{
- background:#dc2626;
- color:#fff;
- padding:3px 8px;
- border-radius:6px;
- font-size:11px
-}
-
+.sem-verde,
+.sem-amarillo,
+.sem-rojo,
 .sem-azul{
- background:#2563eb;
  color:#fff;
  padding:3px 8px;
  border-radius:6px;
- font-size:11px
+ font-size:11px;
 }
+
+.sem-verde{background:#16a34a}
+.sem-amarillo{background:#eab308}
+.sem-rojo{background:#dc2626}
+.sem-azul{background:#2563eb}
 
 /* ================= MODAL ================= */
 
@@ -303,14 +268,12 @@ tbody tr:hover{
  z-index:9999;
 }
 
-/* modal más ancho en escritorio */
-
 .modal-content{
  background:#fff;
  padding:24px;
  border-radius:16px;
  width:100%;
- max-width:600px;
+ max-width:650px;
  max-height:90vh;
  overflow:auto;
  box-shadow:0 20px 60px rgba(0,0,0,.25);
@@ -321,24 +284,62 @@ tbody tr:hover{
 #modalForm input,
 #modalForm select{
  width:100%;
- display:block;
  margin-bottom:10px;
 }
 
-/* layout escritorio */
+/* ================= ARCHIVOS ================= */
 
-@media(min-width:900px){
+.file-block{
+ display:flex;
+ flex-direction:column;
+ gap:8px;
+ margin-bottom:14px;
+}
 
-#modalForm .modal-content{
- display:grid;
- grid-template-columns:repeat(2,1fr);
+.preview-box{
+ display:flex;
+ align-items:center;
  gap:12px;
+ padding:10px;
+ border:1px solid #e5e7eb;
+ border-radius:10px;
+ background:#f8fafc;
+ width:100%;
+ max-width:420px;
 }
 
-#modalForm h3{
- grid-column:1/-1;
+/* FOTO PREVIEW */
+
+.preview-box img{
+ width:70px;
+ height:70px;
+ object-fit:cover;
+ border-radius:8px;
+ border:1px solid #d1d5db;
+ cursor:pointer;
+ transition:.2s;
 }
 
+.preview-box img:hover{
+ transform:scale(1.05);
+ box-shadow:0 2px 6px rgba(0,0,0,.2);
+}
+
+/* PDF PREVIEW */
+
+.preview-box a{
+ padding:6px 12px;
+ border-radius:8px;
+ background:#eef2ff;
+ border:1px solid #c7d2fe;
+ text-decoration:none;
+ font-size:13px;
+ color:#3730a3;
+ font-weight:600;
+}
+
+.preview-box a:hover{
+ background:#e0e7ff;
 }
 
 /* ================= FOTO GRANDE ================= */
@@ -382,98 +383,19 @@ tbody tr:hover{
  display:flex;
  justify-content:space-between;
 }
+
+
+
+/* ================= MOBILE ================= */
+
 @media(max-width:768px){
 
-body{
- padding:10px;
-}
-
-/* ocultar tabla */
-
-.table-scroll{
- display:none;
-}
-
-/* mostrar tarjetas */
-
-.mobile-list{
- display:flex;
- flex-direction:column;
- gap:12px;
-}
-
-/* TARJETAS */
-
-.card{
- width:100%;
- max-width:100%;
-}
-
-/* KPI EN VERTICAL */
+.table-scroll{display:none;}
+.mobile-list{display:block;}
 
 #kpis{
- display:flex;
- flex-direction:column;
- gap:10px;
+ grid-template-columns:repeat(2,1fr);
 }
-
-.kpi{
- width:100%;
-}
-
-
-/* ================= BOTON TRASLADO ================= */
-
-.btn-traslado{
- background:#2563eb;
- color:#fff;
- border:0;
- border-radius:8px;
- padding:6px 10px;
- font-size:13px;
- font-weight:600;
- display:flex;
- align-items:center;
- gap:6px;
- cursor:pointer;
-}
-
-.btn-traslado:hover{
- background:#1d4ed8;
-}
-
-/* VER TRASLADO */
-
-.btn-traslado-view{
- background:#dc2626;
- color:#fff;
- padding:6px 10px;
- border-radius:8px;
- font-size:13px;
- text-decoration:none;
- display:flex;
- align-items:center;
- gap:6px;
-}
-
-.btn-traslado-view:hover{
- background:#b91c1c;
-}
-
-
-/* filtros más compactos */
-
-.filters{
- flex-direction:column;
-}
-
-.filters input,
-.filters select,
-.filters button{
- width:100%;
-}
-
-/* modal más pequeño */
 
 .modal-content{
  width:95%;
@@ -482,38 +404,67 @@ body{
 
 }
 
+
+.top-bar{
+ display:flex;
+ flex-wrap:wrap;
+ gap:8px;
+ margin-bottom:10px;
+}
+
+.panel-hidden{
+display:none !important;
+}
 </style>
 
 </head>
 
 <body>
 
-<h2>🚚 Tracking de Pedidos</h2>
+    <h2>🚚 Tracking de Pedidos</h2>
 
-<div id="kpis"></div>
-
-<div class="filters">
-
-<input id="search" placeholder="Buscar pedido o cliente">
-
-<input type="date" id="fDesde">
-<input type="date" id="fHasta">
-
-<select id="fStatus">
-<option value="">Todos</option>
-<option>PENDIENTE</option>
-<option>EN RUTA</option>
-<option>RECIBIDO</option>
-<option>ENTREGADO</option>
-<option>CANCELADO</option>
-</select>
-
-<button id="btnNuevo">➕ Nuevo</button>
-<button id="btnPDF">📄 PDF</button>
-<button id="btnExcel">📊 Excel</button>
-<button id="btnReload">🔄 Recargar</button>
-
-</div>
+    <div class="top-bar">
+    
+    <button id="btnTogglePanel">📊 Ocultar Panel</button>
+    
+    <button id="btnNuevo">➕ Nuevo</button>
+    <button id="btnPDF">📄 PDF</button>
+    <button id="btnExcel">📊 Excel</button>
+    <button id="btnReload">🔄 Recargar</button>
+    
+    <input id="search" placeholder="Buscar pedido o cliente">
+    
+    <select id="fStatus">
+        <option value="">Todos</option>
+        <option>PENDIENTE</option>
+        <option>EN RUTA</option>
+        <option>RECIBIDO</option>
+        <option>ENTREGADO</option>
+        <option>CANCELADO</option>
+        </select>
+        
+        
+    
+    
+    </div>
+    
+    
+    <div id="panelDashboard">
+         
+        <input type="date" id="fDesde">
+        <input type="date" id="fHasta">
+        <div id="kpis"></div>
+        
+        <div class="filters">
+        
+       
+        
+        
+        
+        
+        </div>
+        
+        </div>
 
 <div class="table-scroll">
 
@@ -651,9 +602,11 @@ margin-top:20px;
     
     <label>Subir Fotos</label>
     <input type="file" id="mFotos" accept="image/*" multiple>
+    <div id="fotoPreview"></div>
     
     <label>Subir PDF</label>
-    <input type="file" id="mPdf" accept="application/pdf" multiple>
+    <input type="file" id="mPdf" accept="application/pdf">
+    <div id="pdfPreview"></div>
     
     <div style="display:flex;gap:10px;margin-top:14px">
     
